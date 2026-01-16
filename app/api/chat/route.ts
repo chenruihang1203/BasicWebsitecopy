@@ -112,19 +112,49 @@ export async function POST(req: NextRequest) {
             },
           ];
 
-          // Update the session with new messages
+          // 更新该会话的消息（如果该会话存在）
+          // 说明：
+          //  - 使用 `findOneAndUpdate` 对匹配 `{ sessionId }` 的文档进行原子更新。
+          //  - 使用 `$push` + `$each` 将 `messagesToAdd` 中的多条消息追加到 `messages` 数组中。
+          //  - `upsert: false` 表示 **如果没有找到匹配的会话，则不会创建（插入）新的文档**。
+          //    因此只有在会话已存在的前提下，才会把消息写入数据库。
+          //  - `new: true` 表示返回更新后的文档（如果找到了的话）。
+          //  备注：如果你希望在会话不存在时自动创建会话，请把 `upsert` 改为 `true` 并提供合适的插入内容。
+
+        /**
+         * 您的 sessionId 是在前端生成的。具体代码在 page.tsx：
+         * const [sessionId] = useState(() => `session_${Math.random().toString(36).substr(2, 9)}`);
+解释：每次页面加载（或组件首次渲染）会生成一个类似 session_xxx 的随机字符串，并在该页面会话内保留（刷新会重新生成）。
+         */
           const session = await GameSession.findOneAndUpdate(
             { sessionId },
             {
+              $setOnInsert: {
+                sessionId,
+                startTime: new Date(),
+                actualOpponent: 'AI', // 默认为 AI
+               // messages: [],
+               /**
+                * 这是因为在同一个 MongoDB 更新操作中，不能同时对同一个字段（messages）执行两种不同的操作
+                * （$setOnInsert 设置为空数组 和 $push 追加内容）。这导致了 ConflictingUpdateOperators 冲突。
+                * MongoDB 的 $push 操作非常智能：
+                * 如果文档是新创建的，它会自动创建 messages 数组并放入消息；
+                * 如果是已存在的文档，它会直接追加。
+                */
+              },
+        
               $push: {
                 messages: {
                   $each: messagesToAdd,
                 },
               },
             },
-            { upsert: false, new: true }
+
+       //     { upsert: false, new: true }
+            {upsert: true, new: true, setDefaultsOnInsert: true }
           );
 
+          // 如果没有找到会话，记录错误日志（不会抛出异常，避免中断流）
           if (!session) {
             console.error(`Session ${sessionId} not found for message logging`);
           } else {
