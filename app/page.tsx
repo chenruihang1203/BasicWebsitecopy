@@ -141,6 +141,15 @@ export default function Home() {
     
     console.log('Subscribing to presence-lobby...');
 
+    // Log all Pusher connection state changes
+    pusher.connection.bind('state_change', (states: any) => {
+      console.log('🔌 Pusher state changed:', states.previous, '→', states.current);
+    });
+
+    pusher.connection.bind('error', (err: any) => {
+      console.error('❌ Pusher connection error:', err);
+    });
+
     // Handle subscription success
     presenceChannel.bind('pusher:subscription_succeeded', (members: any) => {
       console.log('Subscription succeeded! Current members:', members.count);
@@ -163,31 +172,48 @@ export default function Home() {
 
     // Handle chat requests
     presenceChannel.bind('client-chat-request', (data: any) => {
-      console.log('Chat request received from:', data.fromUser);
+      console.log('📨 [EVENT RECEIVED] client-chat-request from:', data.fromUser, 'to:', data.targetUser, 'sessionId:', data.sessionId);
       if (data.targetUser === userName) {
+        console.log('✅ This message is for me! Showing confirmation dialog...');
         const accept = confirm(`${data.fromUser} wants to start a Turing Test with you. Accept?`);
         if (accept) {
           const sharedSession = data.sessionId;
           setActiveSessionId(sharedSession);
-          console.log('Chat accepted, sessionId:', sharedSession);
+          console.log('✅ Chat accepted, sessionId:', sharedSession);
           // Notify sender of acceptance
-          presenceChannel.trigger('client-chat-accepted', {
-            fromUser: userName,
-            targetUser: data.fromUser,
-            sessionId: sharedSession,
-          });
+          try {
+            presenceChannel.trigger('client-chat-accepted', {
+              fromUser: userName,
+              targetUser: data.fromUser,
+              sessionId: sharedSession,
+            });
+            console.log('✅ Acceptance notification sent');
+          } catch (error) {
+            console.error('❌ Failed to send acceptance:', error);
+          }
           // Switch to that user's conversation
           const targetUser = allUsersRef.current.find(u => u.name === data.fromUser);
           if (targetUser) {
             setSelectedUser(targetUser);
+            console.log('Switched to chat with:', data.fromUser);
           }
+        } else {
+          console.log('❌ Chat request rejected');
         }
       }
     });
 
     presenceChannel.bind('client-chat-accepted', (data: any) => {
+      console.log('Chat accepted by:', data.fromUser, 'sessionId:', data.sessionId);
       if (data.targetUser === userName) {
         setActiveSessionId(data.sessionId);
+        console.log('✅ Session established:', data.sessionId);
+        // Switch to that user's conversation
+        const targetUser = allUsersRef.current.find(u => u.name === data.fromUser);
+        if (targetUser) {
+          setSelectedUser(targetUser);
+          console.log('Switched to chat with:', data.fromUser);
+        }
       }
     });
 
@@ -287,7 +313,6 @@ export default function Home() {
     if (user.isReal) {
       // Real human user - send chat request
       const sharedSessionId = `match_${userName}_${user.name}_${Date.now()}`;
-      setActiveSessionId(sharedSessionId);
       console.log('Sending chat request to:', user.name, 'with sessionId:', sharedSessionId);
       
       if (presenceChannelRef.current) {
@@ -297,15 +322,20 @@ export default function Home() {
             targetUser: user.name,
             sessionId: sharedSessionId,
           });
-          console.log('Chat request sent successfully');
+          console.log('✅ Chat request sent successfully');
+          alert(`Chat request sent to ${user.name}. Waiting for response...`);
         } catch (error) {
-          console.error('Failed to send chat request:', error);
+          console.error('❌ Failed to send chat request:', error);
+          alert(`Failed to send chat request: ${error}\n\nMake sure "Enable client events" is checked in your Pusher Dashboard > App Settings.`);
         }
       } else {
-        console.error('Presence channel not available');
+        console.error('❌ Presence channel not available');
+        alert('Presence channel not ready. Please refresh the page.');
       }
+    } else {
+      // AI user - select immediately
+      setSelectedUser(user);
     }
-    setSelectedUser(user);
   };
 
   // Handle sending message
