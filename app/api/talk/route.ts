@@ -53,12 +53,14 @@ export async function POST(req: NextRequest) {
 
     // 触发 Pusher 事件进行实时广播
     // 使用 private channel 以增加安全性 (格式: private-session-ID)
-    await pusher.trigger(`private-session-${sessionId}`, 'new-message', {
+    console.log('📡 Triggering Pusher event on channel:', `private-session-${sessionId}`, 'with data:', { sender, content, role: messageToAdd.role, timestamp });
+    const triggerResult = await pusher.trigger(`private-session-${sessionId}`, 'new-message', {
       sender,
       content,
       role: messageToAdd.role,
       timestamp: timestamp,
     });
+    console.log('📡 Pusher trigger result:', triggerResult);
 
     return NextResponse.json({ success: true });
   } catch (error) {

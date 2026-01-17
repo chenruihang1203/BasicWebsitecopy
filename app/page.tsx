@@ -35,6 +35,14 @@ interface PresenceMember {
   };
 }
 
+// Invite object used for pending invitations
+interface Invite {
+  fromUser: string;
+  targetUser: string;
+  sessionId: string;
+  timestamp?: number;
+} 
+
 // ========== Mock Data ==========
 const mockUsers: User[] = [
   { id: '6', name: 'Cute', avatar: '✨', status: 'online', isReal: false },
@@ -84,6 +92,10 @@ export default function Home() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string>('');
+
+  // Incoming invite handling
+  const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
+  const [activeInvite, setActiveInvite] = useState<Invite | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pusherRef = useRef<Pusher | null>(null);
@@ -170,42 +182,26 @@ export default function Home() {
       removePresenceUser(member);
     });
 
-    // Handle chat requests
+    // Handle chat requests (queue + modal + notification)
     presenceChannel.bind('client-chat-request', (data: any) => {
       console.log('📨 [EVENT RECEIVED] client-chat-request from:', data.fromUser, 'to:', data.targetUser, 'sessionId:', data.sessionId);
       if (data.targetUser === userName) {
-        console.log('✅ This message is for me! Showing confirmation dialog...');
-        const accept = confirm(`${data.fromUser} wants to start a Turing Test with you. Accept?`);
-        if (accept) {
-          const sharedSession = data.sessionId;
-          setActiveSessionId(sharedSession);
-          console.log('✅ Chat accepted, sessionId:', sharedSession);
-          // Notify sender of acceptance
-          try {
-            presenceChannel.trigger('client-chat-accepted', {
-              fromUser: userName,
-              targetUser: data.fromUser,
-              sessionId: sharedSession,
-            });
-            console.log('✅ Acceptance notification sent');
-          } catch (error) {
-            console.error('❌ Failed to send acceptance:', error);
-          }
-          // Switch to that user's conversation
-          const targetUser = allUsersRef.current.find(u => u.name === data.fromUser);
-          if (targetUser) {
-            setSelectedUser(targetUser);
-            console.log('Switched to chat with:', data.fromUser);
-          }
+        const invite: Invite = { fromUser: data.fromUser, targetUser: data.targetUser, sessionId: data.sessionId, timestamp: Date.now() };
+        if (document.visibilityState === 'visible') {
+          console.log('Page visible — showing in-page modal for invite from', data.fromUser);
+          setActiveInvite(invite);
         } else {
-          console.log('❌ Chat request rejected');
+          console.log('Page hidden — queueing invite and sending notification');
+          setPendingInvites(prev => [invite, ...prev]);
+          showDesktopNotification(invite);
         }
       }
     });
 
     presenceChannel.bind('client-chat-accepted', (data: any) => {
-      console.log('Chat accepted by:', data.fromUser, 'sessionId:', data.sessionId);
+      console.log('✅ [ACCEPTED] Received client-chat-accepted from:', data.fromUser, 'sessionId:', data.sessionId);
       if (data.targetUser === userName) {
+        console.log('✅ [ACCEPTED] Setting activeSessionId for receiver to:', data.sessionId);
         setActiveSessionId(data.sessionId);
         console.log('✅ Session established:', data.sessionId);
         // Switch to that user's conversation
@@ -226,12 +222,26 @@ export default function Home() {
 
   // Private session channel for direct messaging
   useEffect(() => {
-    if (!activeSessionId || !pusherRef.current) return;
+    if (!activeSessionId || !pusherRef.current) {
+      console.log('❌ Private channel effect skipped: activeSessionId=', activeSessionId, 'pusherRef.current=', !!pusherRef.current);
+      return;
+    }
+
+    console.log('🔗 Subscribing to private channel:', `private-session-${activeSessionId}`);
 
     const pusher = pusherRef.current;
     const sessionChannel = pusher.subscribe(`private-session-${activeSessionId}`);
 
+    sessionChannel.bind('pusher:subscription_succeeded', () => {
+      console.log('✅ Private channel subscription succeeded:', `private-session-${activeSessionId}`);
+    });
+
+    sessionChannel.bind('pusher:subscription_error', (error: any) => {
+      console.error('❌ Private channel subscription error:', error);
+    });
+
     sessionChannel.bind('new-message', (data: any) => {
+      console.log('📨 [PRIVATE CHANNEL] Received new-message:', data);
       if (data.sender !== userName) {
         const incomingMsg: Message = {
           id: Date.now(),
@@ -244,14 +254,18 @@ export default function Home() {
         const senderUser = allUsersRef.current.find(u => u.name === data.sender);
         const userId = senderUser ? senderUser.id : Date.now();
 
+        console.log('📝 Adding message to conversation for userId:', userId);
         setConversations(prev => ({
           ...prev,
           [userId]: [...(prev[userId] || []), incomingMsg],
         }));
+      } else {
+        console.log('📨 Ignoring own message from:', data.sender);
       }
     });
 
     return () => {
+      console.log('🔌 Unsubscribing from private channel:', `private-session-${activeSessionId}`);
       sessionChannel.unbind_all();
       pusher.unsubscribe(`private-session-${activeSessionId}`);
     };
@@ -301,6 +315,84 @@ export default function Home() {
     console.log('Removing presence user:', member.info.name);
     setAllUsers(prev => prev.filter(u => u.name !== member.info.name));
   };
+
+  // Desktop notification helper
+  const showDesktopNotification = (invite: Invite) => {
+    try {
+      if (typeof window === 'undefined' || !('Notification' in window)) return;
+      if (Notification.permission === 'granted') {
+        const n = new Notification(`${invite.fromUser} 邀请你开始对话`, {
+          body: '点击以切回页面并处理邀请',
+          requireInteraction: true,
+        } as any);
+        n.onclick = () => {
+          try { window.focus(); } catch (e) {}
+          setActiveInvite(invite);
+          setPendingInvites(prev => prev.filter(i => i.sessionId !== invite.sessionId));
+        };
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') showDesktopNotification(invite);
+        });
+      }
+    } catch (err) {
+      console.warn('Notification failed', err);
+    }
+  };
+
+  // Accept an invite (called from modal UI)
+  const acceptInvite = (invite: Invite | null) => {
+    if (!invite) return;
+    const sharedSession = invite.sessionId;
+    console.log('✅ [ACCEPT] Setting activeSessionId to:', sharedSession);
+    setActiveSessionId(sharedSession);
+    console.log('✅ Chat accepted (via modal), sessionId:', sharedSession);
+    try {
+      presenceChannelRef.current?.trigger('client-chat-accepted', {
+        fromUser: userName,
+        targetUser: invite.fromUser,
+        sessionId: sharedSession,
+      });
+      console.log('✅ Acceptance notification sent');
+    } catch (error) {
+      console.error('❌ Failed to send acceptance:', error);
+    }
+    const targetUser = allUsersRef.current.find(u => u.name === invite.fromUser);
+    if (targetUser) setSelectedUser(targetUser);
+    setActiveInvite(null);
+    setPendingInvites(prev => prev.filter(i => i.sessionId !== invite.sessionId));
+  };
+
+  // Reject an invite
+  const rejectInvite = (invite: Invite | null) => {
+    if (!invite) return;
+    console.log('❌ Invite rejected from:', invite.fromUser);
+    // Optionally notify sender about rejection with a client event
+    try {
+      presenceChannelRef.current?.trigger('client-chat-rejected', {
+        fromUser: userName,
+        targetUser: invite.fromUser,
+        sessionId: invite.sessionId,
+      });
+    } catch (err) {
+      console.warn('Failed to send rejection', err);
+    }
+    setActiveInvite(null);
+    setPendingInvites(prev => prev.filter(i => i.sessionId !== invite.sessionId));
+  };
+
+  // When the page becomes visible, process pending invites (open the most recent)
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && pendingInvites.length > 0 && !activeInvite) {
+        const next = pendingInvites[0];
+        setActiveInvite(next);
+        setPendingInvites(prev => prev.slice(1));
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [pendingInvites, activeInvite]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -437,6 +529,7 @@ export default function Home() {
     } 
     // Case 2: Human-Human Chat (Real users)
     else {
+      console.log('💬 Sending human message to session:', activeSessionId, 'content:', userText);
       try {
         const response = await fetch('/api/talk', {
           method: 'POST',
@@ -449,9 +542,16 @@ export default function Home() {
           }),
         });
 
-        if (!response.ok) throw new Error('Failed to send human message');
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ /api/talk failed:', response.status, errorText);
+          throw new Error(`Failed to send human message: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ /api/talk success:', result);
       } catch (error) {
-        console.error('Human talk error:', error);
+        console.error('❌ Human talk error:', error);
       } finally {
         setIsTyping(false);
       }
@@ -501,6 +601,25 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* ========== Invite Modal (replaces confirm) ========= */}
+      {activeInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="text-4xl">{getAvatarForUser(activeInvite.fromUser)}</div>
+              <div>
+                <div className="text-lg font-semibold">{activeInvite.fromUser}</div>
+                <div className="text-sm text-gray-500">wants to start a Turing Test with you</div>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { rejectInvite(activeInvite); }} className="px-4 py-2 rounded-xl bg-gray-100">Decline</button>
+              <button onClick={() => { acceptInvite(activeInvite); }} className="px-4 py-2 rounded-xl bg-blue-600 text-white">Accept</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ========== Left Side: Chat Container (60-70%) ========== */}
       <div className="chat-container flex-[2] bg-gray-100 border-r border-gray-300 flex flex-col">
         {/* User List Header */}
@@ -627,8 +746,16 @@ export default function Home() {
       {/* ========== Right Side: Profile Container (30-40%) ========== */}
       <div className="profile-container flex-1 bg-white flex flex-col">
         {/* Profile Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 shadow-md">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 shadow-md flex items-center justify-between">
           <h2 className="text-xl font-bold">👤 My Profile</h2>
+          <div className="flex items-center gap-3">
+            {pendingInvites.length > 0 && (
+              <button onClick={() => { const next = pendingInvites[0]; setActiveInvite(next); setPendingInvites(prev => prev.slice(1)); }} className="bg-white text-pink-600 px-3 py-1 rounded-full text-sm font-medium shadow-sm">
+                {pendingInvites.length} Pending
+              </button>
+            )}
+            <button className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">Settings</button>
+          </div>
         </div>
 
         {/* Profile Card */}
