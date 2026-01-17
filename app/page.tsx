@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Pusher from 'pusher-js';
 
 // ========== TypeScript Interfaces ==========
 interface User {
@@ -71,6 +72,59 @@ export default function Home() {
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(() => `session_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pusherRef = useRef<Pusher | null>(null);
+
+  // Pusher real-time subscription for Human-Human chat
+  useEffect(() => {
+    // Only initialize Pusher if keys are provided
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+
+    if (!pusherKey || !pusherCluster) {
+      console.warn('Pusher keys missing. Real-time chat will not work.');
+      return;
+    }
+
+    if (!pusherRef.current) {
+      pusherRef.current = new Pusher(pusherKey, {
+        cluster: pusherCluster,
+        authEndpoint: '/api/pusher/auth',
+      });
+    }
+
+    const pusher = pusherRef.current;
+    const channelName = `private-session-${sessionId}`;
+    const channel = pusher.subscribe(channelName);
+
+    // Bind to the 'new-message' event
+    channel.bind('new-message', (data: any) => {
+      // 只有当消息不是我自己发出的（或者是通过 Pusher 回传的他人消息）才更新 UI
+      // 在这个 MVP 中，我们假定 data.sender 是对方的名字
+      if (data.sender !== 'You') {
+        const incomingMsg: Message = {
+          id: Date.now(),
+          sender: data.sender,
+          text: data.content,
+          isUserMessage: false,
+          timestamp: new Date(data.timestamp),
+        };
+
+        // 查找该消息属于哪个用户（根据名字匹配模拟用户）
+        const senderUser = mockUsers.find(u => u.name === data.sender);
+        const userId = senderUser ? senderUser.id : 1; // 默认 fallback
+
+        setConversations(prev => ({
+          ...prev,
+          [userId]: [...(prev[userId] || []), incomingMsg],
+        }));
+      }
+    });
+
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(channelName);
+    };
+  }, [sessionId]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -108,76 +162,101 @@ export default function Home() {
     setInputText('');
     setIsTyping(true);
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: (conversations[currentUserId] || []).concat(newMessage).map(m => ({
-            role: m.isUserMessage ? 'user' : 'assistant',
-            content: m.text,
-          })),
-          sessionId,
-          personaId,
-        }),
-      });
+    // Case 1: AI Chat (Cute)
+    if (personaId === 'cute') {
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: (conversations[currentUserId] || []).concat(newMessage).map(m => ({
+              role: m.isUserMessage ? 'user' : 'assistant',
+              content: m.text,
+            })),
+            sessionId,
+            personaId,
+          }),
+        });
 
-      if (!response.ok) throw new Error('Failed to get response');
+        if (!response.ok) throw new Error('Failed to get response');
 
-      // Create a message placeholder for the AI response
-      const aiMessageId = Date.now() + 1;
-      const aiMessage: Message = {
-        id: aiMessageId,
-        sender: selectedUser.name,
-        text: '',
-        isUserMessage: false,
-        timestamp: new Date(),
-      };
+        // Create a message placeholder for the AI response
+        const aiMessageId = Date.now() + 1;
+        const aiMessage: Message = {
+          id: aiMessageId,
+          sender: selectedUser.name,
+          text: '',
+          isUserMessage: false,
+          timestamp: new Date(),
+        };
 
-      setConversations(prev => ({
-        ...prev,
-        [currentUserId]: [...(prev[currentUserId] || []), aiMessage],
-      }));
+        setConversations(prev => ({
+          ...prev,
+          [currentUserId]: [...(prev[currentUserId] || []), aiMessage],
+        }));
 
-      // Read the stream
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullText = '';
+        // Read the stream
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value, { stream: true });
-          fullText += chunk;
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            fullText += chunk;
 
-          // Update the specific AI message in the conversation
-          setConversations(prev => {
-            const userMsgs = [...(prev[currentUserId] || [])];
-            const msgIndex = userMsgs.findIndex(m => m.id === aiMessageId);
-            if (msgIndex !== -1) {
-              userMsgs[msgIndex] = { ...userMsgs[msgIndex], text: fullText };
-            }
-            return { ...prev, [currentUserId]: userMsgs };
-          });
+            // Update the specific AI message in the conversation
+            setConversations(prev => {
+              const userMsgs = [...(prev[currentUserId] || [])];
+              const msgIndex = userMsgs.findIndex(m => m.id === aiMessageId);
+              if (msgIndex !== -1) {
+                userMsgs[msgIndex] = { ...userMsgs[msgIndex], text: fullText };
+              }
+              return { ...prev, [currentUserId]: userMsgs };
+            });
+          }
         }
+      } catch (error) {
+        console.error('Chat error:', error);
+        const errorMessage: Message = {
+          id: Date.now() + 2,
+          sender: 'System',
+          text: 'Sorry, I encountered an error. Please try again.',
+          isUserMessage: false,
+          timestamp: new Date(),
+        };
+        setConversations(prev => ({
+          ...prev,
+          [currentUserId]: [...(prev[currentUserId] || []), errorMessage],
+        }));
+      } finally {
+        setIsTyping(false);
       }
-    } catch (error) {
-      console.error('Chat error:', error);
-      const errorMessage: Message = {
-        id: Date.now() + 2,
-        sender: 'System',
-        text: 'Sorry, I encountered an error. Please try again.',
-        isUserMessage: false,
-        timestamp: new Date(),
-      };
-      setConversations(prev => ({
-        ...prev,
-        [currentUserId]: [...(prev[currentUserId] || []), errorMessage],
-      }));
-    } finally {
-      setIsTyping(false);
+    } 
+    // Case 2: Human-Human Chat (Others)
+    else {
+      try {
+        const response = await fetch('/api/talk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            sender: 'You', // In a real app, this would be the actual user name
+            content: userText,
+            role: 'user',
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to send human message');
+        // 不需要在这里设置 isTyping(false)，因为对方的消息会通过 Pusher 异步到达
+      } catch (error) {
+        console.error('Human talk error:', error);
+      } finally {
+        setIsTyping(false);
+      }
     }
   };
 
