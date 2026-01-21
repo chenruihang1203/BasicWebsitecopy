@@ -31,18 +31,21 @@ IMPORTANT: You are a human-like avatar who is just very "cute" in their communic
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, sessionId, personaId } = await req.json();
+    const { messages, sessionId, personaId, systemPrompt: clientSystemPrompt, opponentInfo } = await req.json();
 
     if (!sessionId) {
       return new Response('Session ID is required', { status: 400 });
     }
 
-    // Determine system prompt based on personaId
-    const systemPrompt = PERSONAS[personaId as keyof typeof PERSONAS] || PERSONAS.default;
+    // Determine system prompt: prefer client-provided `systemPrompt`, otherwise fall back to persona map
+    const systemPrompt = clientSystemPrompt || PERSONAS[personaId as keyof typeof PERSONAS] || PERSONAS.default;
 
     // Require either OpenAI or QWEN (DashScope) credentials
-    if (!process.env.OPENAI_API_KEY && !(process.env.QWEN_API_KEY && process.env.QWEN_BASE_URL)) {
-      return new Response('AI API key not configured (set OPENAI_API_KEY or QWEN_API_KEY + QWEN_BASE_URL)', { status: 500 });
+//    if (!process.env.OPENAI_API_KEY && !(process.env.QWEN_API_KEY && process.env.QWEN_BASE_URL)) {
+//      return new Response('AI API key not configured (set OPENAI_API_KEY or QWEN_API_KEY + QWEN_BASE_URL)', { status: 500 });
+//    }
+    if (!process.env.OPENAI_API_KEY && !(process.env.MODELSCOPE_API_KEY && process.env.MODELSCOPE_BASE_URL)) {
+      return new Response('AI API key not configured (set OPENAI_API_KEY or MODELSCOPE_API_KEY + MODELSCOPE_BASE_URL)', { status: 500 });
     }
 
     // Connect to database if configured
@@ -52,15 +55,30 @@ export async function POST(req: NextRequest) {
 
     // Choose provider: QWEN (DashScope compatible) if configured, otherwise OpenAI
     let modelProvider;
-    if (process.env.QWEN_API_KEY && process.env.QWEN_BASE_URL) {
-      // Create an OpenAI-compatible client pointed at DashScope
-      const qwenClient = createOpenAI({
-        apiKey: process.env.QWEN_API_KEY,
-        baseURL: process.env.QWEN_BASE_URL,
+    // if (process.env.QWEN_API_KEY && process.env.QWEN_BASE_URL) {
+    //   // Create an OpenAI-compatible client pointed at DashScope
+    //   const qwenClient = createOpenAI({
+    //     apiKey: process.env.QWEN_API_KEY,
+    //     baseURL: process.env.QWEN_BASE_URL,
+    //   });
+    //   // Use .chat() to ensure it targets the correct Chat Completions API
+    //   // modelProvider = qwenClient.chat('qwen-turbo');
+    //   modelProvider = qwenClient.chat('Qwen/Qwen2.5-7B-Instruct');
+    // } else {
+    //   modelProvider = openai('gpt-4o-mini');
+    // }
+    if(process.env.MODELSCOPE_API_KEY && process.env.MODELSCOPE_BASE_URL)
+    {
+      // Create an OpenAI-compatible client pointed at MODELSCOPE
+      const modelScopeClient = createOpenAI({
+        apiKey: process.env.MODELSCOPE_API_KEY,
+        baseURL: process.env.MODELSCOPE_BASE_URL,
       });
       // Use .chat() to ensure it targets the correct Chat Completions API
-      modelProvider = qwenClient.chat('qwen-turbo');
-    } else {
+      // modelProvider = modelScopeClient.chat('qwen-turbo');
+      modelProvider = modelScopeClient.chat('Qwen/Qwen2.5-7B-Instruct');
+    }
+    else {
       modelProvider = openai('gpt-4o-mini');
     }
 

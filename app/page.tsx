@@ -10,6 +10,8 @@ interface User {
   avatar: string;
   status: 'online' | 'offline';
   isReal?: boolean; // New: true for real presence users, false/undefined for mock AI
+  profile?: any; // optional profile object for AI-generated opponents
+  systemPrompt?: string; // optional system prompt for AI personas
 }
 
 interface Message {
@@ -44,8 +46,8 @@ interface Invite {
 } 
 
 // ========== Mock Data ==========
+// Start with no fixed AI mock; we'll auto-create an AI opponent after login
 const mockUsers: User[] = [
-  { id: '6', name: 'Cute', avatar: '✨', status: 'online', isReal: false },
   // Note: Real human users will be added dynamically via Presence
 ];
 
@@ -399,9 +401,72 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversations, selectedUser]);
 
+  // Auto-create an AI opponent once after login if none selected
+  const createAIOpponent = async () => {
+    if (selectedUser) return;
+    try {
+      const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2,9)}`;
+      const res = await fetch('/api/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: newSessionId }),
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch match');
+
+      const data = await res.json();
+      const { matchedOpponent, starterMessage } = data;
+      if (!matchedOpponent) throw new Error('No matchedOpponent');
+
+      const aiUser: User = {
+        id: matchedOpponent.id,
+        name: matchedOpponent.name,
+        avatar: matchedOpponent.avatar || getAvatarForUser(matchedOpponent.name || 'AI'),
+        status: 'online',
+        isReal: false,
+        profile: matchedOpponent.profile,
+        systemPrompt: matchedOpponent.systemPrompt,
+      };
+
+      setAllUsers(prev => [...prev, aiUser]);
+
+      const assistantMsg: Message = {
+        id: Date.now(),
+        sender: aiUser.name,
+        text: starterMessage || '',
+        isUserMessage: false,
+        timestamp: new Date(),
+      };
+
+      setConversations(prev => ({
+        ...prev,
+        [aiUser.id]: [...(prev[aiUser.id] || []), assistantMsg],
+      }));
+
+      setSelectedUser(aiUser);
+      setActiveSessionId(newSessionId);
+    } catch (err) {
+      console.error('createAIOpponent failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && !selectedUser) {
+      createAIOpponent();
+    }
+    // only run when login status changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn]);
+
   // Handle user selection
   const handleUserClick = (user: User) => {
     console.log('User clicked:', user.name, 'isReal:', user.isReal);
+    // Prevent opening a new chat while another chat is active
+    if (selectedUser && selectedUser.id !== user.id) {
+      alert('Please close the current chat before opening another.');
+      return;
+    }
+
     if (user.isReal) {
       // Real human user - send chat request
       const sharedSessionId = `match_${userName}_${user.name}_${Date.now()}`;
@@ -425,8 +490,67 @@ export default function Home() {
         alert('Presence channel not ready. Please refresh the page.');
       }
     } else {
-      // AI user - select immediately
-      setSelectedUser(user);
+      // AI user - request a generated opponent from the server and replace the fixed mock
+      (async () => {
+        try {
+          const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2,9)}`;
+          const res = await fetch('/api/match', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId: newSessionId }),
+          });
+
+          if (!res.ok) throw new Error('Failed to fetch match');
+
+          const data = await res.json();
+          const { matchedOpponent, starterMessage } = data;
+
+          if (!matchedOpponent) throw new Error('No matchedOpponent returned');
+
+          const aiUser: User = {
+            id: matchedOpponent.id,
+            name: matchedOpponent.name,
+            avatar: matchedOpponent.avatar || getAvatarForUser(matchedOpponent.name || 'AI'),
+            status: 'online',
+            isReal: false,
+            profile: matchedOpponent.profile,
+            systemPrompt: matchedOpponent.systemPrompt,
+          };
+
+          // Replace existing mock Cute entry if present, otherwise append
+          setAllUsers(prev => {
+            const found = prev.findIndex(u => u.id === '6' || u.name === 'Cute');
+            if (found !== -1) {
+              const copy = [...prev];
+              copy[found] = aiUser;
+              return copy;
+            }
+            // Append if not found
+            return [...prev, aiUser];
+          });
+
+          // Seed conversation with starter message
+          const assistantMsg: Message = {
+            id: Date.now(),
+            sender: aiUser.name,
+            text: starterMessage || '',
+            isUserMessage: false,
+            timestamp: new Date(),
+          };
+
+          setConversations(prev => ({
+            ...prev,
+            [aiUser.id]: [...(prev[aiUser.id] || []), assistantMsg],
+          }));
+
+          setSelectedUser(aiUser);
+          setActiveSessionId(newSessionId);
+        } catch (err) {
+          console.error('Failed to get AI match:', err);
+          // fallback: select the static user
+          setSelectedUser(user);
+        }
+      })();
     }
   };
 
@@ -439,6 +563,8 @@ export default function Home() {
     const userText = inputText;
     const currentUserId = selectedUser.id;
     const personaId = selectedUser.name.toLowerCase() === 'cute' ? 'cute' : 'default';
+    const clientSystemPrompt = (selectedUser as any)?.systemPrompt;
+    const isAIChat = !!clientSystemPrompt || selectedUser.isReal === false;
 
     const newMessage: Message = {
       id: Date.now(),
@@ -456,8 +582,8 @@ export default function Home() {
     setInputText('');
     setIsTyping(true);
 
-    // Case 1: AI Chat (Cute)
-    if (personaId === 'cute') {
+    // Case 1: AI Chat (generated persona or legacy Cute)
+    if (isAIChat) {
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
@@ -469,6 +595,8 @@ export default function Home() {
             })),
             sessionId: activeSessionId || `ai_${userName}_${Date.now()}`,
             personaId,
+            systemPrompt: clientSystemPrompt,
+            opponentInfo: (selectedUser as any)?.profile || null,
           }),
         });
 
@@ -645,6 +773,12 @@ export default function Home() {
                   {user.isReal && <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Human</span>}
                   {!user.isReal && <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">AI</span>}
                 </div>
+                {/* Profile shortTags (if provided) - same style as AI tag */}
+                <div className="mt-1">
+                  {((user as any)?.profile?.shortTags || []).slice(0,4).map((t: string, i: number) => (
+                    <span key={i} className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{t}</span>
+                  ))}
+                </div>
                 <div className="text-xs text-gray-500 flex items-center gap-1">
                   <span className={`w-2 h-2 rounded-full ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                   {user.status}
@@ -673,7 +807,13 @@ export default function Home() {
                   <div className="text-3xl">{selectedUser.avatar}</div>
                   <div>
                     <div className="font-semibold text-gray-800">{selectedUser.name}</div>
-                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                    {/* Selected user shortTags */}
+                    <div className="mt-1">
+                      {((selectedUser as any)?.profile?.shortTags || []).slice(0,4).map((t: string, i: number) => (
+                        <span key={i} className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{t}</span>
+                      ))}
+                    </div>
+                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                       <span className={`w-2 h-2 rounded-full ${selectedUser.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                       {selectedUser.status}
                     </div>
