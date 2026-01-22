@@ -33,11 +33,41 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     maxOutputTokens: 400,
     temperature: 0.7,
   },
+  // {
+  //   modelId: 'deepseek-ai/DeepSeek-R1-0528',
+  //   displayName: 'DeepSeek',
+  //   maxOutputTokens: 400,
+  //   temperature: 0.7,
+  // },
+  // {
+  //   modelId: 'MiniMax/MiniMax-M1-80k',
+  //   displayName: 'MiniMax',
+  //   maxOutputTokens: 400,
+  //   temperature: 0.7,
+  // },
+  // {
+  //   modelId: 'PaddlePaddle/ERNIE-4.5-0.3B-PT',
+  //   displayName: 'PaddlePaddle',
+  //   maxOutputTokens: 400,
+  //   temperature: 0.7,
+  // },
+  // {
+  //   modelId: 'ZhipuAI/GLM-4.5:ZhipuAI',
+  //   displayName: 'GLM',
+  //   maxOutputTokens: 400,
+  //   temperature: 0.7,
+  // },
   {
-    modelId: 'deepseek-ai/DeepSeek-R1-0528',
-    displayName: 'DeepSeek',
-    maxOutputTokens: 400,
-    temperature: 0.7,
+      modelId: 'XiaomiMiMo/MiMo-V2-Flash',
+      displayName: 'XiaoMiMo',
+      maxOutputTokens: 400,
+      temperature: 0.7,
+  },
+  {
+      modelId: 'Qwen/Qwen2.5-7B-Instruct-1M',
+      displayName: 'Qwen',
+      maxOutputTokens: 400,
+      temperature: 0.7,
   },
 ];
 
@@ -189,7 +219,7 @@ export function createProviderById(modelId: string): AIModelProvider | null {
  * Unified character generation prompt template
  * Works for ALL models - no per-model variations
  */
-export const UNIFIED_CHARACTER_PROMPT = `Generate exactly one character object in valid JSON. Output only pure JSON without any commentary.
+export const UNIFIED_CHARACTER_PROMPT = `Generate exactly one character object in valid JSON. Output only pure JSON without any commentary. The format is very strictly enforced.
 
 JSON shape: { "character": { id:number, name:string, avatar:string, status:'online', profile:{ nickname, gender, age, occupation, location, difficulty, interests[], personality, shortTags[] }, systemPrompt:string, starterMessage:string } }
 

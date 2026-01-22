@@ -415,77 +415,68 @@ export default function Home() {
       if (!res.ok) throw new Error('Failed to fetch match');
 
       const data = await res.json();
-      const { matchedOpponent, secondCandidate } = data;
+      const { matchedOpponent, allCharacters } = data;
       if (!matchedOpponent) throw new Error('No matchedOpponent');
 
+      console.log('[Frontend] Raw response:', { 
+        hasMatchedOpponent: !!matchedOpponent,
+        hasAllCharacters: !!allCharacters,
+        allCharactersIsArray: Array.isArray(allCharacters),
+        allCharactersLength: allCharacters?.length,
+      });
+
       console.log('[Frontend] Received characters:', { 
-        matched: matchedOpponent.name, 
-        second: secondCandidate?.name 
+        matched: matchedOpponent.name,
+        total: allCharacters?.length || 0,
+        names: allCharacters?.map((c: any) => c.name) || []
       });
 
       console.log('[Frontend] Model IDs:', {
         matched: matchedOpponent.modelId,
-        second: secondCandidate?.modelId
+        all: allCharacters?.map((c: any) => c.modelId) || []
       });
 
-      // Create User objects for both characters (Qwen and DeepSeek)
+      // Create User objects for ALL characters (one per model in DEFAULT_MODELS)
       const aiUsers: User[] = [];
+      console.log('[Lobby] Before creating AI users, allCharacters length:', allCharacters?.length);
 
-      // First character (matchedOpponent)
-      const firstUser: User = {
-        id: matchedOpponent.id,
-        name: matchedOpponent.name,
-        avatar: matchedOpponent.avatar || getAvatarForUser(matchedOpponent.name || 'AI'),
-        status: 'online',
-        isReal: false,
-        profile: matchedOpponent.profile,
-        systemPrompt: matchedOpponent.systemPrompt,
-      };
-      aiUsers.push(firstUser);
+      if (allCharacters && Array.isArray(allCharacters)) {
+        console.log('[Lobby] Processing', allCharacters.length, 'characters');
+        
+        allCharacters.forEach((character: any, index: number) => {
+          console.log(`[Lobby] Processing character ${index + 1}:`, {
+            name: character.name,
+            modelId: character.modelId,
+          });
 
-      // Initialize conversation for first user with their starter message
-      const firstAssistantMsg: Message = {
-        id: Date.now(),
-        sender: firstUser.name,
-        text: matchedOpponent.starterMessage || 'Hi there!',
-        isUserMessage: false,
-        timestamp: new Date(),
-      };
+          const aiUser: User = {
+            id: character.id,
+            name: character.name,
+            avatar: character.avatar || getAvatarForUser(character.name || 'AI'),
+            status: 'online',
+            isReal: false,
+            profile: character.profile,
+            systemPrompt: character.systemPrompt,
+          };
+          aiUsers.push(aiUser);
 
-      setConversations(prev => ({
-        ...prev,
-        [firstUser.id]: [firstAssistantMsg],
-      }));
+          // Initialize conversation with starter message
+          const assistantMsg: Message = {
+            id: Date.now() + aiUsers.length,
+            sender: aiUser.name,
+            text: character.starterMessage || 'Hi there!',
+            isUserMessage: false,
+            timestamp: new Date(),
+          };
 
-      // Second character (secondCandidate) if available
-      if (secondCandidate) {
-        const secondUser: User = {
-          id: secondCandidate.id,
-          name: secondCandidate.name,
-          avatar: secondCandidate.avatar || getAvatarForUser(secondCandidate.name || 'AI'),
-          status: 'online',
-          isReal: false,
-          profile: secondCandidate.profile,
-          systemPrompt: secondCandidate.systemPrompt,
-        };
-        aiUsers.push(secondUser);
-
-        // Initialize conversation for second user with their starter message
-        const secondAssistantMsg: Message = {
-          id: Date.now() + 1,
-          sender: secondUser.name,
-          text: secondCandidate.starterMessage || 'Hello!',
-          isUserMessage: false,
-          timestamp: new Date(),
-        };
-
-        setConversations(prev => ({
-          ...prev,
-          [secondUser.id]: [secondAssistantMsg],
-        }));
+          setConversations(prev => ({
+            ...prev,
+            [aiUser.id]: [assistantMsg],
+          }));
+        });
       }
 
-      // Add both AI users to the lobby
+      // Add all AI users to the lobby
       console.log('[Lobby] Before adding users, current allUsers:', allUsers.length);
       setAllUsers(prev => {
         const updated = [...prev, ...aiUsers];
@@ -493,8 +484,9 @@ export default function Home() {
         return updated;
       });
 
-      // Select the first user by default
-      setSelectedUser(firstUser);
+      // Select the matchedOpponent (already chosen by server)
+      const selectedUser = aiUsers.find(u => u.id === matchedOpponent.id) || aiUsers[0];
+      setSelectedUser(selectedUser);
       setActiveSessionId(newSessionId);
 
       console.log(`[Lobby] Added ${aiUsers.length} AI characters to lobby:`, aiUsers.map(u => `${u.name} (${u.profile?.modelId || 'unknown'})`));
@@ -830,13 +822,21 @@ export default function Home() {
                   {user.isReal && <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Human</span>}
                   {!user.isReal && <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">AI</span>}
                 </div>
-                {/* Display modelId as vendor tag - exact full model ID string */}
+                {/* Display model vendor: displayName + modelId (if available) */}
                 <div className="mt-1">
                   {(() => {
                     const modelId = (user as any)?.profile?.modelId;
-                    if (!modelId) return null;
+                    const display = (user as any)?.profile?.modelDisplayName || modelId;
+                    if (!modelId) {
+                      return ((user as any)?.profile?.shortTags || []).slice(0,4).map((t: string, i: number) => (
+                        <span key={i} className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{t}</span>
+                      ));
+                    }
                     return (
-                      <span className="mr-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">{modelId}</span>
+                      <>
+                        <span className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{display}</span>
+                        <span className="mr-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">{modelId}</span>
+                      </>
                     );
                   })()}
 
@@ -874,13 +874,16 @@ export default function Home() {
                     <div className="font-semibold text-gray-800">{selectedUser.name}</div>
                     {/* Selected user shortTags */}
                     <div className="mt-1">
-                      {/* Vendor tag for AI personas (reuse same visual style) */}
+                      {/* Vendor tag for AI personas (display name + model id) */}
                       {(() => {
-                        const vendor = (selectedUser as any)?.profile?.modelType;
-                        if (!vendor) return null;
-                        const name = vendor === 'qwen' ? 'Qwen' : vendor === 'deepseek' ? 'DeepSeek' : vendor;
+                        const modelId = (selectedUser as any)?.profile?.modelId;
+                        const display = (selectedUser as any)?.profile?.modelDisplayName || modelId;
+                        if (!modelId) return null;
                         return (
-                          <span className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{name}</span>
+                          <>
+                            <span className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{display}</span>
+                            <span className="mr-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">{modelId}</span>
+                          </>
                         );
                       })()}
 
