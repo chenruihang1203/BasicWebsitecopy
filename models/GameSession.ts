@@ -11,7 +11,7 @@ export interface IGameSession extends Document {
   startTime: Date;
   messages: IMessage[];
   playerGuess?: 'AI' | 'HUMAN';
-  actualOpponent: 'AI';
+  actualOpponent: 'AI' | 'HUMAN';
   isCorrect?: boolean;
   decisionTime?: Date;
   score?: number;
@@ -59,7 +59,7 @@ const GameSessionSchema = new Schema<IGameSession>(
     actualOpponent: {
       type: String,
       default: 'AI',
-      enum: ['AI'],
+      enum: ['AI', 'HUMAN'],
     },
     isCorrect: {
       type: Boolean,
