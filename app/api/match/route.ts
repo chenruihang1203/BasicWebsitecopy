@@ -173,7 +173,7 @@ filter 的回调检查每个元素 p 是否不等于 null（返回布尔值 p !=
       console.log(`[Match] Generating characters from ${providers.length} models sequentially...`);
       
       const characters: Character[] = [];
-      const REQUEST_DELAY_MS = 10000; // 请求间隔 10 秒
+      const REQUEST_DELAY_MS = 1000; // Reduced to 1 second between requests
 
       // 串行生成角色，每次请求之间添加延迟
       for (let index = 0; index < providers.length; index++) {
@@ -239,17 +239,11 @@ filter 的回调检查每个元素 p 是否不等于 null（返回布尔值 p !=
 
       // Return all generated characters (one per model in DEFAULT_MODELS)
       if (characters.length > 0) {
-        // Randomly select one as the matched opponent
-        const pickIndex = Math.floor(Math.random() * characters.length);
-        const matchedOpponent = characters[pickIndex];
-
-        console.log(`[Match] Generated ${characters.length} characters, selected: ${matchedOpponent.name} (${matchedOpponent.modelId})`);
+        console.log(`[Match] Generated ${characters.length} characters`);
         
-        // Return all characters plus the randomly selected matchedOpponent
+        // Return all characters only (no matchedOpponent selection)
         return NextResponse.json({ 
-          matchedOpponent, 
-          starterMessage: matchedOpponent.starterMessage,
-          allCharacters: characters // Include all generated characters
+          allCharacters: characters
         });
       } else {
         console.warn('[Match] No characters generated, falling back to deterministic mock');
@@ -281,13 +275,8 @@ filter 的回调检查每个元素 p 是否不等于 null（返回布尔值 p !=
       },
     }));
 
-    const pickIndex = Math.floor(Math.random() * mappedChars.length);
-    const matchedOpponent = mappedChars[pickIndex];
-
     return NextResponse.json({ 
-      matchedOpponent, 
-      starterMessage: matchedOpponent.starterMessage,
-      allCharacters: mappedChars // Return all mock characters
+      allCharacters: mappedChars // Return all mock characters only
     });
   } catch (error) {
     console.error('[Match] Error in /api/match:', error);

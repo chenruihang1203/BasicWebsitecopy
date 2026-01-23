@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import Pusher from 'pusher-js';
 
 // ========== TypeScript Interfaces ==========
@@ -234,6 +235,13 @@ export default function Home() {
       }
     });
 
+    // Handle AI user removal from lobby
+    presenceChannel.bind('client-ai-left', (data: any) => {
+      console.log('🤖 [AI LEFT] Received client-ai-left for aiId:', data.aiId);
+      setAllUsers(prev => prev.filter(u => u.id !== data.aiId));
+      console.log('AI user removed from lobby');
+    });
+
     return () => {
       console.log('Cleaning up Pusher subscription...');
       presenceChannel.unbind_all();
@@ -433,14 +441,13 @@ export default function Home() {
       if (!res.ok) throw new Error('Failed to fetch match');
 
       const data = await res.json();
-      const { matchedOpponent, allCharacters } = data;
-      if (!matchedOpponent) throw new Error('No matchedOpponent');
+      const { allCharacters } = data;
+      if (!allCharacters || allCharacters.length === 0) throw new Error('No characters returned');
 
       // Create User objects for characters
       const aiUsers: User[] = [];
-      const charList = selectMatchedOpponent && allCharacters ? allCharacters : [matchedOpponent];
 
-      charList.forEach((character: any) => {
+      allCharacters.forEach((character: any) => {
         const aiUser: User = {
           id: character.id,
           name: character.name,
@@ -467,14 +474,14 @@ export default function Home() {
         }));
       });
 
-      // Add all AI users to the lobby
-      setAllUsers(prev => [...prev, ...aiUsers]);
+      // Clear existing AI users and add new ones (keep only real human users)
+      setAllUsers(prev => {
+        const realUsers = prev.filter(u => u.isReal === true);
+        return [...realUsers, ...aiUsers];
+      });
 
-      // Select the matchedOpponent
-      if (selectMatchedOpponent) {
-        const selectedAI = aiUsers.find(u => u.id === matchedOpponent.id) || aiUsers[0];
-        setSelectedUser(selectedAI);
-      } else {
+      // Select the first character if requested
+      if (selectMatchedOpponent && aiUsers.length > 0) {
         setSelectedUser(aiUsers[0]);
       }
 
@@ -488,7 +495,7 @@ export default function Home() {
   // Auto-create AI opponents once on mount
   const createAIOpponent = async () => {
     if (selectedUser) return;
-    await fetchAndAddCharacters(true);
+    await fetchAndAddCharacters(false); // Don't auto-select, let user choose
   };
 
   useEffect(() => {
@@ -503,25 +510,34 @@ export default function Home() {
   const handleUserClick = (user: User) => {
     console.log('User clicked:', user.name, 'isReal:', user.isReal);
     // Prevent opening a new chat while another chat is active
-    if (selectedUser && selectedUser.id !== user.id) {
-      alert('Please close the current chat before opening another.');
+    if (selectedUser && selectedUser.id !== user.id && activeSessionId) {
+      alert('Please end the current chat before selecting another.');
       return;
     }
 
-    if (user.isReal) {
+    // Simply select the user (no auto-start)
+    setSelectedUser(user);
+    console.log('User selected:', user.name);
+  };
+
+  // Start chat with the selected user
+  const startChatWithSelectedUser = async () => {
+    if (!selectedUser) return;
+
+    if (selectedUser.isReal) {
       // Real human user - send chat request
-      const sharedSessionId = `match_${userName}_${user.name}_${Date.now()}`;
-      console.log('Sending chat request to:', user.name, 'with sessionId:', sharedSessionId);
+      const sharedSessionId = `match_${userName}_${selectedUser.name}_${Date.now()}`;
+      console.log('Sending chat request to:', selectedUser.name, 'with sessionId:', sharedSessionId);
       
       if (presenceChannelRef.current) {
         try {
           presenceChannelRef.current.trigger('client-chat-request', {
             fromUser: userName,
-            targetUser: user.name,
+            targetUser: selectedUser.name,
             sessionId: sharedSessionId,
           });
           console.log('✅ Chat request sent successfully');
-          alert(`Chat request sent to ${user.name}. Waiting for response...`);
+          alert(`Chat request sent to ${selectedUser.name}. Waiting for response...`);
         } catch (error) {
           console.error('❌ Failed to send chat request:', error);
           alert(`Failed to send chat request: ${error}\n\nMake sure "Enable client events" is checked in your Pusher Dashboard > App Settings.`);
@@ -531,68 +547,78 @@ export default function Home() {
         alert('Presence channel not ready. Please refresh the page.');
       }
     } else {
-      // AI user - fetch a fresh generated opponent
-      (async () => {
-        const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2,9)}`;
-        const res = await fetch('/api/match', {
+      // AI user - start session
+      const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2,9)}`;
+      
+      try {
+        // Call /api/session to start the session
+        const sessionRes = await fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId: newSessionId }),
+          body: JSON.stringify({
+            sessionId: newSessionId,
+            action: 'start',
+            opponent: {
+              id: selectedUser.id,
+              modelId: (selectedUser as any)?.profile?.modelId,
+              type: 'AI',
+            },
+          }),
         });
 
-        if (!res.ok) {
-          console.error('Failed to fetch match');
-          setSelectedUser(user);
-          return;
-        }
+        if (!sessionRes.ok) throw new Error('Failed to start session');
 
+        setActiveSessionId(newSessionId);
+        console.log('✅ Session started:', newSessionId);
+      } catch (error) {
+        console.error('Failed to start chat:', error);
+        alert('Failed to start chat. Please try again.');
+      }
+    }
+  };
+
+  // End the current session
+  const endSession = async () => {
+    if (!activeSessionId || !selectedUser) return;
+
+    try {
+      // Call /api/session to end the session
+      const res = await fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: activeSessionId,
+          action: 'end',
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to end session');
+
+      console.log('✅ Session ended:', activeSessionId);
+
+      // If AI chat, remove AI user from lobby and trigger presence event
+      if (selectedUser.isReal === false) {
+        // Remove AI user from local state
+        setAllUsers(prev => prev.filter(u => u.id !== selectedUser.id));
+
+        // Trigger presence event for other clients
         try {
-          const data = await res.json();
-          const { matchedOpponent } = data;
-          if (!matchedOpponent) throw new Error('No matchedOpponent');
-
-          const aiUser: User = {
-            id: matchedOpponent.id,
-            name: matchedOpponent.name,
-            avatar: matchedOpponent.avatar || getAvatarForUser(matchedOpponent.name || 'AI'),
-            status: 'online',
-            isReal: false,
-            profile: matchedOpponent.profile,
-            systemPrompt: matchedOpponent.systemPrompt,
-          };
-
-          // Replace or append the user
-          setAllUsers(prev => {
-            const found = prev.findIndex(u => u.id === user.id);
-            if (found !== -1) {
-              const copy = [...prev];
-              copy[found] = aiUser;
-              return copy;
-            }
-            return [...prev, aiUser];
+          presenceChannelRef.current?.trigger('client-ai-left', {
+            sessionId: activeSessionId,
+            aiId: selectedUser.id,
           });
-
-          // Add starter message
-          const assistantMsg: Message = {
-            id: Date.now(),
-            sender: aiUser.name,
-            text: matchedOpponent.starterMessage || 'Hi there!',
-            isUserMessage: false,
-            timestamp: new Date(),
-          };
-
-          setConversations(prev => ({
-            ...prev,
-            [aiUser.id]: [assistantMsg],
-          }));
-
-          setSelectedUser(aiUser);
-          setActiveSessionId(newSessionId);
-        } catch (err) {
-          console.error('Failed to process AI match:', err);
-          setSelectedUser(user);
+          console.log('✅ AI removal notification sent');
+        } catch (error) {
+          console.warn('Failed to send AI removal notification:', error);
         }
-      })();
+      }
+
+      // Clear session state
+      setSelectedUser(null);
+      setActiveSessionId('');
+    } catch (error) {
+      console.error('Failed to end session:', error);
+      alert('Failed to end session. Please try again.');
     }
   };
 
@@ -761,9 +787,15 @@ export default function Home() {
       {/* ========== Left Side: Chat Container (60-70%) ========== */}
       <div className="chat-container flex-[2] bg-gray-100 border-r border-gray-300 flex flex-col">
         {/* User List Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 shadow-md">
-          <h2 className="text-xl font-bold">💬 Chat Lobby</h2>
-          <p className="text-sm text-blue-100">Select a user to start chatting</p>
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 shadow-md flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold">💬 Chat Lobby</h2>
+            <p className="text-sm text-blue-100">Select a user to start chatting</p>
+          </div>
+          <Link href="/" className="inline-flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm font-medium" title="回大厅">
+            <span className="text-lg">🏠</span>
+            Back to homepage
+          </Link>
         </div>
 
         {/* User List */}
@@ -829,33 +861,54 @@ export default function Home() {
             <>
               {/* Chat Header */}
               <div className="bg-white border-b border-gray-200 p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="text-3xl">{selectedUser.avatar}</div>
-                  <div>
-                    <div className="font-semibold text-gray-800">{selectedUser.name}</div>
-                    {/* Selected user shortTags */}
-                    <div className="mt-1">
-                      {/* Vendor tag for AI personas (display name + model id) */}
-                      {(() => {
-                        const modelId = (selectedUser as any)?.profile?.modelId;
-                        const display = (selectedUser as any)?.profile?.modelDisplayName || modelId;
-                        if (!modelId) return null;
-                        return (
-                          <>
-                            <span className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{display}</span>
-                            <span className="mr-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">{modelId}</span>
-                          </>
-                        );
-                      })()}
+                <div className="flex items-center gap-3 justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">{selectedUser.avatar}</div>
+                    <div>
+                      <div className="font-semibold text-gray-800">{selectedUser.name}</div>
+                      {/* Selected user shortTags */}
+                      <div className="mt-1">
+                        {/* Vendor tag for AI personas (display name + model id) */}
+                        {(() => {
+                          const modelId = (selectedUser as any)?.profile?.modelId;
+                          const display = (selectedUser as any)?.profile?.modelDisplayName || modelId;
+                          if (!modelId) return null;
+                          return (
+                            <>
+                              <span className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{display}</span>
+                              <span className="mr-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">{modelId}</span>
+                            </>
+                          );
+                        })()}
 
-                      {((selectedUser as any)?.profile?.shortTags || []).slice(0,4).map((t: string, i: number) => (
-                        <span key={i} className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{t}</span>
-                      ))}
+                        {((selectedUser as any)?.profile?.shortTags || []).slice(0,4).map((t: string, i: number) => (
+                          <span key={i} className="mr-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{t}</span>
+                        ))}
+                      </div>
+                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <span className={`w-2 h-2 rounded-full ${selectedUser.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                        {selectedUser.status}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                      <span className={`w-2 h-2 rounded-full ${selectedUser.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-                      {selectedUser.status}
-                    </div>
+                  </div>
+                  {/* Action buttons */}
+                  <div className="flex gap-2">
+                    {!activeSessionId && (
+                      <button
+                        onClick={startChatWithSelectedUser}
+                        className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Start Chat
+                      </button>
+                    )}
+                    {activeSessionId && (
+                      <button
+                        onClick={endSession}
+                        className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        End
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
