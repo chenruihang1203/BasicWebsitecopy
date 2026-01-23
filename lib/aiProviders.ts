@@ -51,12 +51,12 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   //   maxOutputTokens: 300,
   //   temperature: 0.7,
   // },
-  {
-    modelId: 'ZhipuAI/GLM-4.7-Flash',
-    displayName: 'GLM',
-    maxOutputTokens: 400,
-    temperature: 0.7,
-  },
+  // {
+  //   modelId: 'ZhipuAI/GLM-4.7-Flash',
+  //   displayName: 'GLM',
+  //   maxOutputTokens: 400,
+  //   temperature: 0.7,
+  // },
   // {
   //     modelId: 'XiaomiMiMo/MiMo-V2-Flash',
   //     displayName: 'XiaoMiMo',
