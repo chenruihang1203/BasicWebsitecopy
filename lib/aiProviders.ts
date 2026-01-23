@@ -45,12 +45,12 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   //   maxOutputTokens: 300,
   //   temperature: 0.7,
   // },
-  {
-    modelId: 'PaddlePaddle/ERNIE-4.5-0.3B-PT',
-    displayName: 'PaddlePaddle',
-    maxOutputTokens: 300,
-    temperature: 0.7,
-  },
+  // {
+  //   modelId: 'PaddlePaddle/ERNIE-4.5-0.3B-PT',
+  //   displayName: 'PaddlePaddle',
+  //   maxOutputTokens: 300,
+  //   temperature: 0.7,
+  // },
   {
     modelId: 'ZhipuAI/GLM-4.7-Flash',
     displayName: 'GLM',
