@@ -30,25 +30,25 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   {
     modelId: 'Qwen/Qwen2.5-7B-Instruct',
     displayName: 'Qwen',
-    maxOutputTokens: 400,
+    maxOutputTokens: 300,
     temperature: 0.7,
   },
   // {
   //   modelId: 'deepseek-ai/DeepSeek-R1-0528',
   //   displayName: 'DeepSeek',
-  //   maxOutputTokens: 400,
+  //   maxOutputTokens: 300,
   //   temperature: 0.7,
   // },
   // {
   //   modelId: 'MiniMax/MiniMax-M1-80k',
   //   displayName: 'MiniMax',
-  //   maxOutputTokens: 400,
+  //   maxOutputTokens: 300,
   //   temperature: 0.7,
   // },
   // {
   //   modelId: 'PaddlePaddle/ERNIE-4.5-0.3B-PT',
   //   displayName: 'PaddlePaddle',
-  //   maxOutputTokens: 400,
+  //   maxOutputTokens: 300,
   //   temperature: 0.7,
   // },
   // {
@@ -60,13 +60,13 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   {
       modelId: 'XiaomiMiMo/MiMo-V2-Flash',
       displayName: 'XiaoMiMo',
-      maxOutputTokens: 400,
+      maxOutputTokens: 300,
       temperature: 0.7,
   },
   {
       modelId: 'Qwen/Qwen2.5-7B-Instruct-1M',
       displayName: 'Qwen',
-      maxOutputTokens: 400,
+      maxOutputTokens: 300,
       temperature: 0.7,
   },
 ];
@@ -225,10 +225,10 @@ JSON shape: { "character": { id:number, name:string, avatar:string, status:'onli
 
 CRITICAL REQUIREMENTS:
 1. Avatar: Use ONLY a single emoji (e.g., 🌸, 🎨, 🧑‍💻, ☕, 🚀, 🌟). Never URLs or multiple emojis.
-2. Personality: Create a distinct, memorable character. Include human-style details ("usually", "I think") and vivid personal touches that feel authentic.
+2. Personality: Create a distinct, memorable character. Include human-style details ("usually", "I think") and vivid personal touches that feel authentic. **Your statements should be concise (50-80 characters).**
 3. Difficulty: Use 'easy', 'medium', or 'hard'. For 'easy', add more casual anecdotes. For 'hard', be more sophisticated.
-4. System Prompt: Write 1-3 paragraphs instructing the AI how to roleplay as this character authentically without revealing AI nature. Include tone, style, verbosity guidelines.
-5. Starter Message: Write 1-2 sentences that match the character's personality.
+4. System Prompt: Write 1-3 paragraphs instructing the AI how to roleplay as this character authentically without revealing AI nature. Include tone, style, verbosity guidelines. **Be concise.**
+5. Starter Message: Write 1-2 sentences that match the character's personality. **Be concise.**
 6. Names/Tags: Short, chat-friendly keywords. No markdown or special escaping.
 
 Generate a unique, randomized profile each time. Make it feel like a real person with specific interests and quirks. Be creative and diverse in backgrounds, locations, and personalities.`;
