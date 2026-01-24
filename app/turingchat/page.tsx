@@ -459,18 +459,11 @@ export default function Home() {
         };
         aiUsers.push(aiUser);
 
-        // Initialize conversation with starter message
-        const assistantMsg: Message = {
-          id: Date.now() + aiUsers.length,
-          sender: aiUser.name,
-          text: character.starterMessage || 'Hi there!',
-          isUserMessage: false,
-          timestamp: new Date(),
-        };
-
+        // NOTE: Starter message will be added when user actually starts the chat
+        // Initialize empty conversation - don't add starter message yet
         setConversations(prev => ({
           ...prev,
-          [aiUser.id]: [assistantMsg],
+          [aiUser.id]: [],
         }));
       });
 
@@ -485,24 +478,19 @@ export default function Home() {
         setSelectedUser(aiUsers[0]);
       }
 
-      setActiveSessionId(newSessionId);
       console.log(`[Lobby] Added ${aiUsers.length} AI character(s):`, aiUsers.map(u => u.name).join(', '));
     } catch (err) {
       console.error('fetchAndAddCharacters failed:', err);
     }
   };
 
-  // Auto-create AI opponents once on mount
-  const createAIOpponent = async () => {
-    if (selectedUser) return;
-    await fetchAndAddCharacters(false); // Don't auto-select, let user choose
-  };
+  // NOTE: AI opponents are no longer auto-created on mount.
+  // Users must manually select opponents (human or AI) from the lobby.
+  // This ensures the Start button appears only after user explicitly selects someone.
 
+  // Auto-load AI characters into lobby on mount (but don't auto-select or auto-start)
   useEffect(() => {
-    if (!selectedUser) {
-      createAIOpponent();
-    }
-    // run once on mount (create AI opponents for guest or logged-in users)
+    fetchAndAddCharacters(false); // Load AI, don't auto-select, don't auto-start
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -569,6 +557,21 @@ export default function Home() {
         if (!sessionRes.ok) throw new Error('Failed to start session');
 
         setActiveSessionId(newSessionId);
+        
+        // Add AI starter message when session actually starts
+        const starterMessage: Message = {
+          id: Date.now(),
+          sender: selectedUser.name,
+          text: (selectedUser as any)?.profile?.starterMessage || 'Hi there!',
+          isUserMessage: false,
+          timestamp: new Date(),
+        };
+        
+        setConversations(prev => ({
+          ...prev,
+          [selectedUser.id]: [starterMessage],
+        }));
+        
         console.log('✅ Session started:', newSessionId);
       } catch (error) {
         console.error('Failed to start chat:', error);
@@ -582,26 +585,24 @@ export default function Home() {
     if (!activeSessionId || !selectedUser) return;
 
     try {
-      // Call /api/session to end the session
-      const res = await fetch('/api/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: activeSessionId,
-          action: 'end',
-        }),
-      });
-
-      if (!res.ok) throw new Error('Failed to end session');
-
-      console.log('✅ Session ended:', activeSessionId);
-
-      // If AI chat, remove AI user from lobby and trigger presence event
+      // For AI chat: call /api/session to clean up backend resources
       if (selectedUser.isReal === false) {
-        // Remove AI user from local state
+        const res = await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: activeSessionId,
+            action: 'end',
+          }),
+        });
+
+        if (!res.ok) throw new Error('Failed to end AI session');
+        console.log('✅ AI session ended:', activeSessionId);
+
+        // Remove AI user from lobby
         setAllUsers(prev => prev.filter(u => u.id !== selectedUser.id));
 
-        // Trigger presence event for other clients
+        // Notify other clients that this AI is no longer available
         try {
           presenceChannelRef.current?.trigger('client-ai-left', {
             sessionId: activeSessionId,
@@ -611,9 +612,13 @@ export default function Home() {
         } catch (error) {
           console.warn('Failed to send AI removal notification:', error);
         }
+      } else {
+        // For human-human chat: just end the session locally
+        // The other party will see the connection drop and can also end their session
+        console.log('✅ Human chat session ended:', activeSessionId);
       }
 
-      // Clear session state
+      // Clear session state for both AI and human chats
       setSelectedUser(null);
       setActiveSessionId('');
     } catch (error) {
