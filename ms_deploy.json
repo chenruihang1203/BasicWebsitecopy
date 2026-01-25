@@ -1,0 +1,17 @@
+{
+	"$schema": "https://modelscope.cn/api/v1/studios/deploy_schema.json",
+	"sdk_type": "docker",
+	"resource_configuration": "platform/2v-cpu-16g-mem",
+	"port": 7860,
+    "environment_variables": [
+        {"name": "MODELSCOPE_API_KEY", "value": "ms-33733262-fb3c-4b10-89e4-69d333956647"},
+        {"name": "MODELSCOPE_BASE_URL", "value": "https://api-inference.modelscope.cn/v1"},
+        {"name": "MONGODB_URI", "value": "mongodb+srv://masterwuguicyh_db_user:AAd0s398X7G0baCe@hackawayi.dcuda9y.mongodb.net/?appName=HacKawayi"},
+        {"name": "PUSHER_APP_ID", "value": "2103224"},
+        {"name": "PUSHER_KEY", "value": "3b43f68c976d7b71fa42"},
+        {"name": "PUSHER_SECRET", "value": "4b053d213e2f5f96f19b"},
+        {"name": "PUSHER_CLUSTER", "value": "ap3"},
+        {"name": "NEXT_PUBLIC_PUSHER_KEY", "value": "3b43f68c976d7b71fa42"},
+        {"name": "NEXT_PUBLIC_PUSHER_CLUSTER", "value": "ap3"}
+  ]
+}

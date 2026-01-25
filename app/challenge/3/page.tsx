@@ -48,8 +48,8 @@ export default function HamiltonianLevel() {
       try {
         const completedRaw = typeof window !== 'undefined' ? localStorage.getItem('completed_levels') : null;
         const completedLevels: number[] = completedRaw ? JSON.parse(completedRaw) : [];
-        if (!completedLevels.includes(4)) {
-          completedLevels.push(4);
+        if (!completedLevels.includes(3)) {
+          completedLevels.push(3);
           localStorage.setItem('completed_levels', JSON.stringify(completedLevels));
         }
       } catch (e) {
@@ -116,7 +116,7 @@ export default function HamiltonianLevel() {
         <Link href="/challenge" className="text-white/80 hover:text-white underline mb-4 inline-block">
           ← Back to Challenges
         </Link>
-        <h1 className="text-3xl font-bold text-white mb-2">Level 4: Hamiltonian Cycle</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Level 3: Hamiltonian Cycle</h1>
         <p className="text-white/90 mb-6">Visit every vertex exactly once and return to the starting vertex.</p>
 
         <div className="bg-white rounded-xl shadow-lg p-6 mb-4 relative" style={{ height: '400px' }}>

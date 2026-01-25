@@ -52,8 +52,8 @@ export default function EulerianLevel() {
       try {
         const completedRaw = typeof window !== 'undefined' ? localStorage.getItem('completed_levels') : null;
         const completedLevels: number[] = completedRaw ? JSON.parse(completedRaw) : [];
-        if (!completedLevels.includes(3)) {
-          completedLevels.push(3);
+        if (!completedLevels.includes(4)) {
+          completedLevels.push(4);
           localStorage.setItem('completed_levels', JSON.stringify(completedLevels));
         }
       } catch (e) {
@@ -110,7 +110,7 @@ export default function EulerianLevel() {
         <Link href="/challenge" className="text-white/80 hover:text-white underline mb-4 inline-block">
           ← Back to Challenges
         </Link>
-        <h1 className="text-3xl font-bold text-white mb-2">Level 3: Eulerian Circuit</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Level 4: Eulerian Circuit</h1>
         <p className="text-white/90 mb-6">
           Find a path that visits every edge exactly once and returns to the starting node.
         </p>

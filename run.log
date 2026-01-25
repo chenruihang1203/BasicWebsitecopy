@@ -1,0 +1,310 @@
+[2026-01-24 22:11:41] [/bin/sh]:   tools: undefined,
+[2026-01-24 22:11:41] [/bin/sh]:   tool_choice: undefined
+[2026-01-24 22:11:41] [/bin/sh]: },
+[2026-01-24 22:11:41] [/bin/sh]:   statusCode: 429,
+[2026-01-24 22:11:41] [/bin/sh]:   responseHeaders: {
+[2026-01-24 22:11:41] [/bin/sh]:   access-control-allow-credentials: 'true',
+[2026-01-24 22:11:41] [/bin/sh]:   access-control-allow-headers: 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization',
+[2026-01-24 22:11:41] [/bin/sh]:   access-control-allow-methods: 'OPTION,HEAD,GET,POST',
+[2026-01-24 22:11:41] [/bin/sh]:   access-control-allow-origin: '*',
+[2026-01-24 22:11:41] [/bin/sh]:   access-control-max-age: '1728000',
+[2026-01-24 22:11:41] [/bin/sh]:   connection: 'keep-alive',
+[2026-01-24 22:11:41] [/bin/sh]:   content-length: '207',
+[2026-01-24 22:11:41] [/bin/sh]:   content-type: 'application/json; charset=utf-8',
+[2026-01-24 22:11:41] [/bin/sh]:   date: 'Sat, 24 Jan 2026 14:11:41 GMT',
+[2026-01-24 22:11:41] [/bin/sh]:   modelscope-ratelimit-model-requests-limit: '20',
+[2026-01-24 22:11:41] [/bin/sh]:   modelscope-ratelimit-model-requests-remaining: '0',
+[2026-01-24 22:11:41] [/bin/sh]:   modelscope-ratelimit-requests-limit: '2000',
+[2026-01-24 22:11:41] [/bin/sh]:   modelscope-ratelimit-requests-remaining: '1924',
+[2026-01-24 22:11:41] [/bin/sh]:   set-cookie: 'acw_tc=0b62602617692639016653921eda888ac08e113186f47dc215dce1d955fd4d;path=/;HttpOnly;Max-Age=1800',
+[2026-01-24 22:11:41] [/bin/sh]:   strict-transport-security: 'max-age=15724800; includeSubDomains'
+[2026-01-24 22:11:41] [/bin/sh]: },
+[2026-01-24 22:11:41] [/bin/sh]:   responseBody: '{"errors":{"message":"You have exceeded today\'s quota for model deepseek-ai/DeepSeek-R1-0528,  please try again tomorrow, or consider using other models","request_id":"ca0d260b-d5a7-4571-b855-19698c652dac"}}',
+[2026-01-24 22:11:41] [/bin/sh]:   isRetryable: true,
+[2026-01-24 22:11:41] [/bin/sh]:   data: undefined,
+[2026-01-24 22:11:41] [/bin/sh]:   [Symbol(vercel.ai.error)]: true,
+[2026-01-24 22:11:41] [/bin/sh]:   [Symbol(vercel.ai.error.AI_APICallError)]: true
+[2026-01-24 22:11:41] [/bin/sh]: },
+[2026-01-24 22:11:41] [/bin/sh]:   [Symbol(vercel.ai.error)]: true,
+[2026-01-24 22:11:41] [/bin/sh]:   [Symbol(vercel.ai.error.AI_RetryError)]: true
+[2026-01-24 22:11:41] [/bin/sh]: }
+[2026-01-24 22:11:45] [/bin/sh]: [Qwen] Raw response length: 513
+[2026-01-24 22:11:45] [/bin/sh]: [Qwen] Character generated: 🎨艾斯
+[2026-01-24 22:11:45] [/bin/sh]: [Match] Total characters successfully generated: 2
+[2026-01-24 22:11:45] [/bin/sh]: [Match] Generated 2 characters
+[2026-01-24 22:11:56] [/bin/sh]: [Match] Generating characters from 3 models sequentially...
+[2026-01-24 22:12:00] [/bin/sh]: [Qwen] Raw response length: 507
+[2026-01-24 22:12:00] [/bin/sh]: [Qwen] Character generated: 小墨
+[2026-01-24 22:12:08] [/bin/sh]: [DeepSeek] Generation failed:  [AI_RetryError: Failed after 3 attempts. Last error: Too Many Requests] {
+[2026-01-24 22:12:08] [/bin/sh]:   name: 'AI_RetryError',
+[2026-01-24 22:12:08] [/bin/sh]:   cause: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   reason: 'maxRetriesExceeded',
+[2026-01-24 22:12:08] [/bin/sh]:   errors: [
+[2026-01-24 22:12:08] [/bin/sh]:    [AI_APICallError: Too Many Requests] {
+[2026-01-24 22:12:08] [/bin/sh]:   name: 'AI_APICallError',
+[2026-01-24 22:12:08] [/bin/sh]:   cause: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   url: 'https://api-inference.modelscope.cn/v1/chat/completions',
+[2026-01-24 22:12:08] [/bin/sh]:   requestBodyValues: {
+[2026-01-24 22:12:08] [/bin/sh]:   model: 'deepseek-ai/DeepSeek-R1-0528',
+[2026-01-24 22:12:08] [/bin/sh]:   logit_bias: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   logprobs: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   top_logprobs: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   user: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   parallel_tool_calls: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   max_tokens: 300,
+[2026-01-24 22:12:08] [/bin/sh]:   temperature: 0.7,
+[2026-01-24 22:12:08] [/bin/sh]:   top_p: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   frequency_penalty: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   presence_penalty: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   response_format: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   stop: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   seed: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   verbosity: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   max_completion_tokens: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   store: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   metadata: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prediction: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   reasoning_effort: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   service_tier: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prompt_cache_key: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prompt_cache_retention: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   safety_identifier: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   messages: [
+[2026-01-24 22:12:08] [/bin/sh]:   {
+[2026-01-24 22:12:08] [/bin/sh]:   role: 'system',
+[2026-01-24 22:12:08] [/bin/sh]:   content: 'You are a character generator. Output only valid JSON.'
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   {
+[2026-01-24 22:12:08] [/bin/sh]:   role: 'user',
+[2026-01-24 22:12:08] [/bin/sh]:   content: '请**严格生成一个符合以下格式的JSON角色对象**。**仅输出纯JSON，不包含任何额外说明或注释**\n\nJSON结构：{ "character": { id:number, name:string, avatar:string, status:\'online\', profile:{ nickname, gender, age, occupation, location, difficulty, interests[], personality, shortTags[] }, systemPrompt:string, starterMessage:string } }\n\n关键要求：\n1. 头像：**仅使用单个表情符号**（例如：🌸、🎨、🧑‍💻、☕、🚀、🌟）。禁止URL或多个表情符号。\n2. 人物性格：创造独特、令人难忘的角色。包含生活化细节（"通常"、"我觉得"）和生动个人特征。**描述必须简洁（50-80个字符）**。\n3. 难度：使用\'简单\'、\'中等\'或\'困难\'。\'简单\'角色增加轻松日常趣事；\'困难\'角色需更专业深度。\n4. 系统提示：用1-3段文字指导AI如何真实扮演此角色（不暴露AI身份）。包含语气、风格、简洁度要求。**必须简洁**。\n5. 开场白：1-2句话，符合角色性格。**必须简洁**。\n6. 名称/标签：简短、聊天友好关键词。禁止Markdown或特殊转义。\n每次生成需随机创建新角色。打造真实感强的个体：具体兴趣、生活细节、独特小习惯。背景、地点、性格需多样化。**所有描述保持简洁精炼**。'
+[2026-01-24 22:12:08] [/bin/sh]: }
+[2026-01-24 22:12:08] [/bin/sh]: ],
+[2026-01-24 22:12:08] [/bin/sh]:   tools: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   tool_choice: undefined
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   statusCode: 429,
+[2026-01-24 22:12:08] [/bin/sh]:   responseHeaders: {
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-credentials: 'true',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-headers: 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-methods: 'OPTION,HEAD,GET,POST',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-origin: '*',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-max-age: '1728000',
+[2026-01-24 22:12:08] [/bin/sh]:   connection: 'keep-alive',
+[2026-01-24 22:12:08] [/bin/sh]:   content-length: '207',
+[2026-01-24 22:12:08] [/bin/sh]:   content-type: 'application/json; charset=utf-8',
+[2026-01-24 22:12:08] [/bin/sh]:   date: 'Sat, 24 Jan 2026 14:12:01 GMT',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-model-requests-limit: '20',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-model-requests-remaining: '0',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-requests-limit: '2000',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-requests-remaining: '1922',
+[2026-01-24 22:12:08] [/bin/sh]:   set-cookie: 'acw_tc=0b62602617692639219343139eda57e5eeec986e86f81194683b6140e6b7d8;path=/;HttpOnly;Max-Age=1800',
+[2026-01-24 22:12:08] [/bin/sh]:   strict-transport-security: 'max-age=15724800; includeSubDomains'
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   responseBody: '{"errors":{"message":"You have exceeded today\'s quota for model deepseek-ai/DeepSeek-R1-0528,  please try again tomorrow, or consider using other models","request_id":"47bad027-1308-4386-8eed-1ef3c1b245e3"}}',
+[2026-01-24 22:12:08] [/bin/sh]:   isRetryable: true,
+[2026-01-24 22:12:08] [/bin/sh]:   data: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error)]: true,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error.AI_APICallError)]: true
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:    [AI_APICallError: Too Many Requests] {
+[2026-01-24 22:12:08] [/bin/sh]:   name: 'AI_APICallError',
+[2026-01-24 22:12:08] [/bin/sh]:   cause: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   url: 'https://api-inference.modelscope.cn/v1/chat/completions',
+[2026-01-24 22:12:08] [/bin/sh]:   requestBodyValues: {
+[2026-01-24 22:12:08] [/bin/sh]:   model: 'deepseek-ai/DeepSeek-R1-0528',
+[2026-01-24 22:12:08] [/bin/sh]:   logit_bias: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   logprobs: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   top_logprobs: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   user: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   parallel_tool_calls: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   max_tokens: 300,
+[2026-01-24 22:12:08] [/bin/sh]:   temperature: 0.7,
+[2026-01-24 22:12:08] [/bin/sh]:   top_p: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   frequency_penalty: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   presence_penalty: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   response_format: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   stop: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   seed: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   verbosity: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   max_completion_tokens: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   store: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   metadata: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prediction: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   reasoning_effort: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   service_tier: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prompt_cache_key: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prompt_cache_retention: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   safety_identifier: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   messages: [
+[2026-01-24 22:12:08] [/bin/sh]:   {
+[2026-01-24 22:12:08] [/bin/sh]:   role: 'system',
+[2026-01-24 22:12:08] [/bin/sh]:   content: 'You are a character generator. Output only valid JSON.'
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   {
+[2026-01-24 22:12:08] [/bin/sh]:   role: 'user',
+[2026-01-24 22:12:08] [/bin/sh]:   content: '请**严格生成一个符合以下格式的JSON角色对象**。**仅输出纯JSON，不包含任何额外说明或注释**\n\nJSON结构：{ "character": { id:number, name:string, avatar:string, status:\'online\', profile:{ nickname, gender, age, occupation, location, difficulty, interests[], personality, shortTags[] }, systemPrompt:string, starterMessage:string } }\n\n关键要求：\n1. 头像：**仅使用单个表情符号**（例如：🌸、🎨、🧑‍💻、☕、🚀、🌟）。禁止URL或多个表情符号。\n2. 人物性格：创造独特、令人难忘的角色。包含生活化细节（"通常"、"我觉得"）和生动个人特征。**描述必须简洁（50-80个字符）**。\n3. 难度：使用\'简单\'、\'中等\'或\'困难\'。\'简单\'角色增加轻松日常趣事；\'困难\'角色需更专业深度。\n4. 系统提示：用1-3段文字指导AI如何真实扮演此角色（不暴露AI身份）。包含语气、风格、简洁度要求。**必须简洁**。\n5. 开场白：1-2句话，符合角色性格。**必须简洁**。\n6. 名称/标签：简短、聊天友好关键词。禁止Markdown或特殊转义。\n每次生成需随机创建新角色。打造真实感强的个体：具体兴趣、生活细节、独特小习惯。背景、地点、性格需多样化。**所有描述保持简洁精炼**。'
+[2026-01-24 22:12:08] [/bin/sh]: }
+[2026-01-24 22:12:08] [/bin/sh]: ],
+[2026-01-24 22:12:08] [/bin/sh]:   tools: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   tool_choice: undefined
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   statusCode: 429,
+[2026-01-24 22:12:08] [/bin/sh]:   responseHeaders: {
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-credentials: 'true',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-headers: 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-methods: 'OPTION,HEAD,GET,POST',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-origin: '*',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-max-age: '1728000',
+[2026-01-24 22:12:08] [/bin/sh]:   connection: 'keep-alive',
+[2026-01-24 22:12:08] [/bin/sh]:   content-length: '207',
+[2026-01-24 22:12:08] [/bin/sh]:   content-type: 'application/json; charset=utf-8',
+[2026-01-24 22:12:08] [/bin/sh]:   date: 'Sat, 24 Jan 2026 14:12:04 GMT',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-model-requests-limit: '20',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-model-requests-remaining: '0',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-requests-limit: '2000',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-requests-remaining: '1922',
+[2026-01-24 22:12:08] [/bin/sh]:   set-cookie: 'acw_tc=0b62602617692639239633149eda574264070be6865c7cd938dbe1736ee615;path=/;HttpOnly;Max-Age=1800',
+[2026-01-24 22:12:08] [/bin/sh]:   strict-transport-security: 'max-age=15724800; includeSubDomains'
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   responseBody: '{"errors":{"message":"You have exceeded today\'s quota for model deepseek-ai/DeepSeek-R1-0528,  please try again tomorrow, or consider using other models","request_id":"7bac8c54-229e-4f58-b829-4fe0e6b32114"}}',
+[2026-01-24 22:12:08] [/bin/sh]:   isRetryable: true,
+[2026-01-24 22:12:08] [/bin/sh]:   data: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error)]: true,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error.AI_APICallError)]: true
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:    [AI_APICallError: Too Many Requests] {
+[2026-01-24 22:12:08] [/bin/sh]:   name: 'AI_APICallError',
+[2026-01-24 22:12:08] [/bin/sh]:   cause: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   url: 'https://api-inference.modelscope.cn/v1/chat/completions',
+[2026-01-24 22:12:08] [/bin/sh]:   requestBodyValues: {
+[2026-01-24 22:12:08] [/bin/sh]:   model: 'deepseek-ai/DeepSeek-R1-0528',
+[2026-01-24 22:12:08] [/bin/sh]:   logit_bias: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   logprobs: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   top_logprobs: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   user: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   parallel_tool_calls: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   max_tokens: 300,
+[2026-01-24 22:12:08] [/bin/sh]:   temperature: 0.7,
+[2026-01-24 22:12:08] [/bin/sh]:   top_p: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   frequency_penalty: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   presence_penalty: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   response_format: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   stop: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   seed: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   verbosity: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   max_completion_tokens: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   store: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   metadata: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prediction: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   reasoning_effort: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   service_tier: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prompt_cache_key: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prompt_cache_retention: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   safety_identifier: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   messages: [
+[2026-01-24 22:12:08] [/bin/sh]:   {
+[2026-01-24 22:12:08] [/bin/sh]:   role: 'system',
+[2026-01-24 22:12:08] [/bin/sh]:   content: 'You are a character generator. Output only valid JSON.'
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   {
+[2026-01-24 22:12:08] [/bin/sh]:   role: 'user',
+[2026-01-24 22:12:08] [/bin/sh]:   content: '请**严格生成一个符合以下格式的JSON角色对象**。**仅输出纯JSON，不包含任何额外说明或注释**\n\nJSON结构：{ "character": { id:number, name:string, avatar:string, status:\'online\', profile:{ nickname, gender, age, occupation, location, difficulty, interests[], personality, shortTags[] }, systemPrompt:string, starterMessage:string } }\n\n关键要求：\n1. 头像：**仅使用单个表情符号**（例如：🌸、🎨、🧑‍💻、☕、🚀、🌟）。禁止URL或多个表情符号。\n2. 人物性格：创造独特、令人难忘的角色。包含生活化细节（"通常"、"我觉得"）和生动个人特征。**描述必须简洁（50-80个字符）**。\n3. 难度：使用\'简单\'、\'中等\'或\'困难\'。\'简单\'角色增加轻松日常趣事；\'困难\'角色需更专业深度。\n4. 系统提示：用1-3段文字指导AI如何真实扮演此角色（不暴露AI身份）。包含语气、风格、简洁度要求。**必须简洁**。\n5. 开场白：1-2句话，符合角色性格。**必须简洁**。\n6. 名称/标签：简短、聊天友好关键词。禁止Markdown或特殊转义。\n每次生成需随机创建新角色。打造真实感强的个体：具体兴趣、生活细节、独特小习惯。背景、地点、性格需多样化。**所有描述保持简洁精炼**。'
+[2026-01-24 22:12:08] [/bin/sh]: }
+[2026-01-24 22:12:08] [/bin/sh]: ],
+[2026-01-24 22:12:08] [/bin/sh]:   tools: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   tool_choice: undefined
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   statusCode: 429,
+[2026-01-24 22:12:08] [/bin/sh]:   responseHeaders: {
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-credentials: 'true',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-headers: 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-methods: 'OPTION,HEAD,GET,POST',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-origin: '*',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-max-age: '1728000',
+[2026-01-24 22:12:08] [/bin/sh]:   connection: 'keep-alive',
+[2026-01-24 22:12:08] [/bin/sh]:   content-length: '207',
+[2026-01-24 22:12:08] [/bin/sh]:   content-type: 'application/json; charset=utf-8',
+[2026-01-24 22:12:08] [/bin/sh]:   date: 'Sat, 24 Jan 2026 14:12:08 GMT',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-model-requests-limit: '20',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-model-requests-remaining: '0',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-requests-limit: '2000',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-requests-remaining: '1922',
+[2026-01-24 22:12:08] [/bin/sh]:   set-cookie: 'acw_tc=0b62602617692639280123185eda57ce03b9f31097a56bd099546e84ce603e;path=/;HttpOnly;Max-Age=1800',
+[2026-01-24 22:12:08] [/bin/sh]:   strict-transport-security: 'max-age=15724800; includeSubDomains'
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   responseBody: '{"errors":{"message":"You have exceeded today\'s quota for model deepseek-ai/DeepSeek-R1-0528,  please try again tomorrow, or consider using other models","request_id":"e9ab7fd6-7276-4eed-9152-ecc6fcdb1bcf"}}',
+[2026-01-24 22:12:08] [/bin/sh]:   isRetryable: true,
+[2026-01-24 22:12:08] [/bin/sh]:   data: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error)]: true,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error.AI_APICallError)]: true
+[2026-01-24 22:12:08] [/bin/sh]: }
+[2026-01-24 22:12:08] [/bin/sh]: ],
+[2026-01-24 22:12:08] [/bin/sh]:   lastError:  [AI_APICallError: Too Many Requests] {
+[2026-01-24 22:12:08] [/bin/sh]:   name: 'AI_APICallError',
+[2026-01-24 22:12:08] [/bin/sh]:   cause: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   url: 'https://api-inference.modelscope.cn/v1/chat/completions',
+[2026-01-24 22:12:08] [/bin/sh]:   requestBodyValues: {
+[2026-01-24 22:12:08] [/bin/sh]:   model: 'deepseek-ai/DeepSeek-R1-0528',
+[2026-01-24 22:12:08] [/bin/sh]:   logit_bias: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   logprobs: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   top_logprobs: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   user: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   parallel_tool_calls: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   max_tokens: 300,
+[2026-01-24 22:12:08] [/bin/sh]:   temperature: 0.7,
+[2026-01-24 22:12:08] [/bin/sh]:   top_p: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   frequency_penalty: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   presence_penalty: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   response_format: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   stop: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   seed: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   verbosity: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   max_completion_tokens: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   store: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   metadata: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prediction: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   reasoning_effort: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   service_tier: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prompt_cache_key: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   prompt_cache_retention: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   safety_identifier: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   messages: [
+[2026-01-24 22:12:08] [/bin/sh]:   {
+[2026-01-24 22:12:08] [/bin/sh]:   role: 'system',
+[2026-01-24 22:12:08] [/bin/sh]:   content: 'You are a character generator. Output only valid JSON.'
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   {
+[2026-01-24 22:12:08] [/bin/sh]:   role: 'user',
+[2026-01-24 22:12:08] [/bin/sh]:   content: '请**严格生成一个符合以下格式的JSON角色对象**。**仅输出纯JSON，不包含任何额外说明或注释**\n\nJSON结构：{ "character": { id:number, name:string, avatar:string, status:\'online\', profile:{ nickname, gender, age, occupation, location, difficulty, interests[], personality, shortTags[] }, systemPrompt:string, starterMessage:string } }\n\n关键要求：\n1. 头像：**仅使用单个表情符号**（例如：🌸、🎨、🧑‍💻、☕、🚀、🌟）。禁止URL或多个表情符号。\n2. 人物性格：创造独特、令人难忘的角色。包含生活化细节（"通常"、"我觉得"）和生动个人特征。**描述必须简洁（50-80个字符）**。\n3. 难度：使用\'简单\'、\'中等\'或\'困难\'。\'简单\'角色增加轻松日常趣事；\'困难\'角色需更专业深度。\n4. 系统提示：用1-3段文字指导AI如何真实扮演此角色（不暴露AI身份）。包含语气、风格、简洁度要求。**必须简洁**。\n5. 开场白：1-2句话，符合角色性格。**必须简洁**。\n6. 名称/标签：简短、聊天友好关键词。禁止Markdown或特殊转义。\n每次生成需随机创建新角色。打造真实感强的个体：具体兴趣、生活细节、独特小习惯。背景、地点、性格需多样化。**所有描述保持简洁精炼**。'
+[2026-01-24 22:12:08] [/bin/sh]: }
+[2026-01-24 22:12:08] [/bin/sh]: ],
+[2026-01-24 22:12:08] [/bin/sh]:   tools: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   tool_choice: undefined
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   statusCode: 429,
+[2026-01-24 22:12:08] [/bin/sh]:   responseHeaders: {
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-credentials: 'true',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-headers: 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-methods: 'OPTION,HEAD,GET,POST',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-allow-origin: '*',
+[2026-01-24 22:12:08] [/bin/sh]:   access-control-max-age: '1728000',
+[2026-01-24 22:12:08] [/bin/sh]:   connection: 'keep-alive',
+[2026-01-24 22:12:08] [/bin/sh]:   content-length: '207',
+[2026-01-24 22:12:08] [/bin/sh]:   content-type: 'application/json; charset=utf-8',
+[2026-01-24 22:12:08] [/bin/sh]:   date: 'Sat, 24 Jan 2026 14:12:08 GMT',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-model-requests-limit: '20',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-model-requests-remaining: '0',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-requests-limit: '2000',
+[2026-01-24 22:12:08] [/bin/sh]:   modelscope-ratelimit-requests-remaining: '1922',
+[2026-01-24 22:12:08] [/bin/sh]:   set-cookie: 'acw_tc=0b62602617692639280123185eda57ce03b9f31097a56bd099546e84ce603e;path=/;HttpOnly;Max-Age=1800',
+[2026-01-24 22:12:08] [/bin/sh]:   strict-transport-security: 'max-age=15724800; includeSubDomains'
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   responseBody: '{"errors":{"message":"You have exceeded today\'s quota for model deepseek-ai/DeepSeek-R1-0528,  please try again tomorrow, or consider using other models","request_id":"e9ab7fd6-7276-4eed-9152-ecc6fcdb1bcf"}}',
+[2026-01-24 22:12:08] [/bin/sh]:   isRetryable: true,
+[2026-01-24 22:12:08] [/bin/sh]:   data: undefined,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error)]: true,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error.AI_APICallError)]: true
+[2026-01-24 22:12:08] [/bin/sh]: },
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error)]: true,
+[2026-01-24 22:12:08] [/bin/sh]:   [Symbol(vercel.ai.error.AI_RetryError)]: true
+[2026-01-24 22:12:08] [/bin/sh]: }

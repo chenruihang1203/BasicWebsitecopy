@@ -17,7 +17,7 @@ type HistoryState = {
   cost: number;
 };
 
-const OPTIMAL_COST = 10;
+const OPTIMAL_COST = 11;
 
 const NODES: GraphNode2[] = [
   { id: 'START', label: 'S', x: 100, y: 200 },
@@ -73,7 +73,8 @@ export default function DijkstraLevel() {
       setHistory([...history, { path: newPath, cost: newCost }]);
 
       if (nodeId === 'TARGET') {
-        setCompleted(true);
+        // Mark completed only when the path cost matches the optimal criteria
+        setCompleted(newCost === OPTIMAL_COST);
       }
     }
   };
@@ -107,6 +108,9 @@ export default function DijkstraLevel() {
       <div className="flex-1 p-8">
         <Link href="/challenge" className="text-white/80 hover:text-white underline mb-4 inline-block">
           ← Back to Challenges
+        </Link>
+        <Link href="/" className="text-white/80 hover:text-white underline mb-4 inline-block turingchat-back-to-homepage">
+          ← Back to Homepage
         </Link>
         <h1 className="text-3xl font-bold text-white mb-2">Level 2: Dijkstra's Algorithm</h1>
         <p className="text-white/90 mb-6">Find the shortest path from START (S) to TARGET (T) by selecting adjacent nodes.</p>

@@ -45,18 +45,18 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   //   maxOutputTokens: 300,
   //   temperature: 0.7,
   // },
-  {
-    modelId: 'PaddlePaddle/ERNIE-4.5-0.3B-PT',
-    displayName: 'PaddlePaddle',
-    maxOutputTokens: 300,
-    temperature: 0.7,
-  },
-  {
-    modelId: 'ZhipuAI/GLM-4.7-Flash',
-    displayName: 'GLM',
-    maxOutputTokens: 400,
-    temperature: 0.7,
-  },
+  // {
+  //   modelId: 'PaddlePaddle/ERNIE-4.5-0.3B-PT',
+  //   displayName: 'PaddlePaddle',
+  //   maxOutputTokens: 300,
+  //   temperature: 0.7,
+  // },
+  // {
+  //   modelId: 'ZhipuAI/GLM-4.7-Flash',
+  //   displayName: 'GLM',
+  //   maxOutputTokens: 400,
+  //   temperature: 0.7,
+  // },
   // {
   //     modelId: 'XiaomiMiMo/MiMo-V2-Flash',
   //     displayName: 'XiaoMiMo',
@@ -187,6 +187,12 @@ export function createProviderById(modelId: string): AIModelProvider | null {
   }
   let apiKey: string | undefined;
   let baseURL: string | undefined;
+  /**
+   * 在这里增加
+   * APIKEY
+   * BASEURL
+   * 的多样化配置
+   *  */
   if(config.displayName == 'deepseek')
   {
     apiKey = process.env.MODELSCOPE_API_KEY;

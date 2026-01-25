@@ -94,8 +94,8 @@ export default function ChallengePage() {
         </div>
 
         <div className="mt-6">
-          <Link href="/" className="inline-block text-white/80 hover:text-white underline">
-            ← Back to Homepage
+          <Link href="/" className="inline-block text-white/80 hover:text-white underline turingchat-back-to-homepage">
+          Back to Homepage
           </Link>
         </div>
       </div>

@@ -15,8 +15,8 @@ type City = {
 const CITIES: City[] = [
   { id: 'A', name: 'A', x: 250, y: 80 },
   { id: 'B', name: 'B', x: 450, y: 100 },
-  { id: 'C', name: 'C', x: 400, y: 280 },
-  { id: 'D', name: 'D', x: 150, y: 300 },
+  { id: 'D', name: 'D', x: 400, y: 280 },
+  { id: 'C', name: 'C', x: 150, y: 300 },
 ];
 
 const DISTANCES: Record<string, Record<string, number>> = {
@@ -70,7 +70,8 @@ export default function TSPLevel() {
         const returnDistance = DISTANCES[cityId][newPath[0]];
         const finalDistance = newTotal + returnDistance;
         setTotalDistance(finalDistance);
-        setCompleted(true);
+        // Completion only when the tour distance equals the required minimum (33)
+        setCompleted(finalDistance === 33);
       }
     }
   };
@@ -97,6 +98,9 @@ export default function TSPLevel() {
       <div className="flex-1 p-8">
         <Link href="/challenge" className="text-white/80 hover:text-white underline mb-4 inline-block">
           ← Back to Challenges
+        </Link>
+        <Link href="/" className="text-white/80 hover:text-white underline mb-4 inline-block algorithmchallenges-back-to-homepage">
+          ← Back to Homepage
         </Link>
         <h1 className="text-3xl font-bold text-white mb-2">Level 5: Traveling Salesman Problem</h1>
         <p className="text-white/90 mb-6">Visit all cities exactly once and return to start. Find the shortest route!</p>

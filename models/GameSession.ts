@@ -16,6 +16,7 @@ export interface IGameSession extends Document {
   decisionTime?: Date;
   score?: number;
   modelId?: string; // Full model ID string (e.g., 'Qwen/Qwen2.5-7B-Instruct')
+  status?: 'active' | 'closed';
 }
 
 const MessageSchema = new Schema<IMessage>({
@@ -76,6 +77,12 @@ const GameSessionSchema = new Schema<IGameSession>(
     },
     modelId: {
       type: String,
+      required: false,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'closed'],
+      default: 'active',
       required: false,
     },
   },
