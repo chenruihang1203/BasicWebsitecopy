@@ -57,8 +57,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Connect to database if configured
+    let dbAvailable = false;
     if (process.env.MONGODB_URI) {
-      await dbConnect();
+      try {
+        await dbConnect();
+        dbAvailable = true;
+      } catch (e) {
+        console.warn('[Chat] DB Connection failed, skipping logging.', e);
+      }
     }
 
     let streamResult;
@@ -82,7 +88,7 @@ export async function POST(req: NextRequest) {
           temperature: 0.8,
           maxOutputTokens: 250,
           onFinish: async ({ text, finishReason }) => {
-            if (!process.env.MONGODB_URI) return;
+            if (!process.env.MONGODB_URI || !dbAvailable) return;
 
             try {
               await dbConnect();

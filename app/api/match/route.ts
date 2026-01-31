@@ -135,31 +135,15 @@ export async function POST(req: Request) {
     if (!sessionId) {
       return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
     }
-
-    // Create providers for all configured models (data-driven)
-    // const providers = createProviders();
-
-    // if (providers.length === 0) {
-    //   console.warn('[Match] No providers available, using deterministic mock');
-    //   const chars = DETERMINISTIC_MOCK.characters as Character[];
-    //   const pickIndex = Math.floor(Math.random() * chars.length);
-    //   const matchedOpponent = chars[pickIndex];
-    //   console.log(`[Match] Mock: returning ${chars.length} characters, selected: ${matchedOpponent.name}`);
-    //   return NextResponse.json({ 
-    //     matchedOpponent, 
-    //     starterMessage: matchedOpponent.starterMessage,
-    //     allCharacters: chars 
-    //   });
-    // }
-
     
-    // Deduplicate by modelId to avoid calling the same model twice when multiple variants
-    // or duplicate entries are present in DEFAULT_MODELS (e.g., two Qwen entries)
-    const uniqueModelIds = new Set<string>();
+    // Deduplicate by displayName to avoid calling the same model provider twice
+    // (e.g., two Qwen variants should only call one Qwen API)
+    const uniqueDisplayNames = new Set<string>();
     const providers = DEFAULT_MODELS
       .filter(cfg => {
-        if (uniqueModelIds.has(cfg.modelId)) return false;
-        uniqueModelIds.add(cfg.modelId);
+        const displayName = cfg.displayName || cfg.modelId;
+        if (uniqueDisplayNames.has(displayName)) return false;
+        uniqueDisplayNames.add(displayName);
         return true;
       })
       .map(cfg => createProviderById(cfg.modelId))
@@ -205,8 +189,10 @@ filter 的回调检查每个元素 p 是否不等于 null（返回布尔值 p !=
           if (parsed && parsed.character) {
             const c = parsed.character;
             const modelDisplayName = provider.getDisplayName();
+            // Use a unique ID combining timestamp, random, and index to avoid duplicate keys
+            const uniqueId = Date.now() * 1000 + Math.floor(Math.random() * 1000) + index;
             characters.push({
-              id: Number(c.id) || Number(Date.now().toString().slice(-6)) + index,
+              id: Number(c.id) || uniqueId,
               name: String(c.name || c.profile?.nickname || modelDisplayName),
               avatar: pickEmoji(c.avatar, c.profile, String(c.name || c.profile?.nickname)),
               status: 'online',

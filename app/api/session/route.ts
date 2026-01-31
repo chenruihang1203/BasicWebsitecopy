@@ -26,55 +26,86 @@ export async function POST(req: Request) {
       );
     }
 
-    await dbConnect();
+    const isHumanOpponent = opponent?.type === 'HUMAN';
+    if (isHumanOpponent) {
+      console.log('[Session] Skipping DB write for HUMAN opponent');
+      return NextResponse.json({ ok: true, session: { sessionId, status: action === 'start' ? 'active' : 'closed' } });
+    }
+
+    let dbAvailable = false;
+    if (process.env.MONGODB_URI) {
+      try {
+        await dbConnect();
+        dbAvailable = true;
+      } catch (err) {
+        console.warn('[Session] MongoDB connection failed, proceeding without DB persistence.', err);
+      }
+    }
 
     if (action === 'start') {
+      if (!dbAvailable) {
+        console.log('[Session] Skipping DB write (no DB connection)');
+        return NextResponse.json({ ok: true, session: { sessionId, status: 'active' } });
+      }
       // Create or update session to active status
-      const session = await GameSession.findOneAndUpdate(
-        { sessionId },
-        {
-          sessionId,
-          status: 'active',
-          startTime: new Date(),
-          modelId: opponent?.modelId || undefined,
-          actualOpponent: opponent?.type === 'HUMAN' ? 'HUMAN' : 'AI',
-        },
-        { upsert: true, new: true }
-      );
+      try {
+        const session = await GameSession.findOneAndUpdate(
+          { sessionId },
+          {
+            sessionId,
+            status: 'active',
+            startTime: new Date(),
+            modelId: opponent?.modelId || undefined,
+            actualOpponent: opponent?.type === 'HUMAN' ? 'HUMAN' : 'AI',
+          },
+          { upsert: true, new: true }
+        );
 
-      console.log(`[Session] Started session: ${sessionId}`);
-      return NextResponse.json({
-        ok: true,
-        session: {
-          sessionId: session.sessionId,
-          status: session.status,
-        },
-      });
+        console.log(`[Session] Started session: ${sessionId}`);
+        return NextResponse.json({
+          ok: true,
+          session: {
+            sessionId: session.sessionId,
+            status: session.status,
+          },
+        });
+      } catch (e) {
+         console.error('[Session] DB Write Error:', e);
+         // Fallback even if write fails
+         return NextResponse.json({ ok: true, session: { sessionId, status: 'active' } });
+      }
     }
 
     if (action === 'end') {
-      // Update session status to closed
-      const session = await GameSession.findOneAndUpdate(
-        { sessionId },
-        { status: 'closed' },
-        { new: true }
-      );
-
-      if (!session) {
-        return NextResponse.json(
-          { error: 'Session not found' },
-          { status: 404 }
-        );
+      if (!dbAvailable) {
+        console.log('[Session] Skipping DB write (no DB connection)');
+        return NextResponse.json({ ok: true, session: { sessionId, status: 'closed' } });
       }
+      // Update session status to closed
+      try {
+        const session = await GameSession.findOneAndUpdate(
+          { sessionId },
+          { status: 'closed' },
+          { new: true }
+        );
 
-      console.log(`[Session] Ended session: ${sessionId}`);
-      return NextResponse.json({
-        ok: true,
-        session: {
-          sessionId: session.sessionId,
-          status: session.status,
-        },
-      });
+        if (!session) {
+          // If not found in DB but strict mode off, just say ok
+          return NextResponse.json({ ok: true, session: { sessionId, status: 'closed' } });
+        }
+
+        console.log(`[Session] Ended session: ${sessionId}`);
+        return NextResponse.json({
+          ok: true,
+          session: {
+            sessionId: session.sessionId,
+            status: session.status,
+          },
+        });
+      } catch (e) {
+        console.warn('[Session] DB close error:', e);
+        return NextResponse.json({ ok: true, session: { sessionId, status: 'closed' } });
+      }
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
