@@ -100,13 +100,15 @@ export default function ChallengePage() {
   const getDifficultyStyle = (difficulty: string) => {
     switch (difficulty) {
       case 'easy':
-        return { border: 'border-green-500/50', text: 'text-green-400', bg: 'bg-green-900/30' };
+        return { border: 'border-green-500/50', text: 'text-green-400', bg: 'bg-green-900/30', label: 'EASY' };
       case 'medium':
-        return { border: 'border-yellow-500/50', text: 'text-yellow-400', bg: 'bg-yellow-900/30' };
+        return { border: 'border-yellow-500/50', text: 'text-yellow-400', bg: 'bg-yellow-900/30', label: 'MEDIUM' };
       case 'hard':
-        return { border: 'border-red-500/50', text: 'text-red-400', bg: 'bg-red-900/30' };
+        return { border: 'border-red-500/50', text: 'text-red-400', bg: 'bg-red-900/30', label: 'HARD' };
+      case 'fatal':
+        return { border: 'border-purple-400/80', text: 'text-purple-300', bg: 'bg-purple-900/50', label: '☠ FATAL' };
       default:
-        return { border: 'border-gray-500/50', text: 'text-gray-400', bg: 'bg-gray-900/30' };
+        return { border: 'border-gray-500/50', text: 'text-gray-400', bg: 'bg-gray-900/30', label: 'UNKNOWN' };
     }
   };
 
@@ -144,14 +146,15 @@ export default function ChallengePage() {
               return (
                 <Link
                   key={level.id}
-                  href={`/challenge/${level.id}`}
+                  href={level.route}
                   className={`group relative block bg-black/80 backdrop-blur-sm border-2 p-6 transition-all duration-300 hover:scale-[1.02] overflow-hidden
                     ${isCompleted ? 'border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.3)]' : 'border-slate-800 hover:border-purple-600'}
+                    ${level.difficulty === 'fatal' ? 'animate-pulse' : ''}
                   `}
                   style={{ animation: isCompleted ? 'pulse-glow 3s infinite' : 'none' }}
                 >
                   {/* Top neon strip */}
-                  <div className={`absolute top-0 left-0 w-full h-1 ${isCompleted ? 'bg-purple-500' : 'bg-slate-700'}`}></div>
+                  <div className={`absolute top-0 left-0 w-full h-1 ${level.difficulty === 'fatal' ? 'bg-purple-400 animate-pulse' : isCompleted ? 'bg-purple-500' : 'bg-slate-700'}`}></div>
                   
                   {/* Protocol ID */}
                   <div className="flex items-center justify-between mb-3">
@@ -165,8 +168,8 @@ export default function ChallengePage() {
                         </span>
                       )}
                     </div>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase border ${diffStyle.border} ${diffStyle.text} ${diffStyle.bg}`}>
-                      {level.difficulty.toUpperCase()}
+                    <span className={`px-2 py-1 text-[10px] font-bold uppercase border ${diffStyle.border} ${diffStyle.text} ${diffStyle.bg} ${level.difficulty === 'fatal' ? 'animate-pulse' : ''}`}>
+                      {diffStyle.label}
                     </span>
                   </div>
 

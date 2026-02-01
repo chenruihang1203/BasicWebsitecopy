@@ -20,39 +20,121 @@ type GraphNode2 = {
   y: number;
 };
 
-type HistoryState = {
-  path: string[];
-  cost: number;
+type Edge = {
+  from: string;
+  to: string;
+  weight: number;
+  id: number;
 };
 
-const OPTIMAL_COST = 11;
-
+// Graph with 6 nodes - designed so MST has unique optimal solution
 const NODES: GraphNode2[] = [
-  { id: 'START', label: 'S', x: 100, y: 200 },
-  { id: 'A', label: 'A', x: 250, y: 100 },
-  { id: 'B', label: 'B', x: 250, y: 300 },
-  { id: 'C', label: 'C', x: 400, y: 150 },
-  { id: 'TARGET', label: 'T', x: 500, y: 250 },
+  { id: 'A', label: 'A', x: 100, y: 150 },
+  { id: 'B', label: 'B', x: 250, y: 80 },
+  { id: 'C', label: 'C', x: 400, y: 100 },
+  { id: 'D', label: 'D', x: 150, y: 300 },
+  { id: 'E', label: 'E', x: 300, y: 280 },
+  { id: 'F', label: 'F', x: 430, y: 250 },
 ];
 
-const EDGES = [
-  { from: 'START', to: 'A', weight: 4 },
-  { from: 'START', to: 'B', weight: 2 },
-  { from: 'A', to: 'C', weight: 5 },
-  { from: 'B', to: 'A', weight: 1 },
-  { from: 'B', to: 'C', weight: 8 },
-  { from: 'C', to: 'TARGET', weight: 3 },
-  { from: 'B', to: 'TARGET', weight: 10 },
+// Edges with weights - MST should use edges with total weight = 13 (edges: AB=1, BD=2, BE=3, CF=4, EF=3)
+const EDGES: Edge[] = [
+  { from: 'A', to: 'B', weight: 1, id: 0 },
+  { from: 'A', to: 'D', weight: 5, id: 1 },
+  { from: 'B', to: 'C', weight: 6, id: 2 },
+  { from: 'B', to: 'D', weight: 2, id: 3 },
+  { from: 'B', to: 'E', weight: 3, id: 4 },
+  { from: 'C', to: 'E', weight: 7, id: 5 },
+  { from: 'C', to: 'F', weight: 4, id: 6 },
+  { from: 'D', to: 'E', weight: 4, id: 7 },
+  { from: 'E', to: 'F', weight: 3, id: 8 },
 ];
 
-export default function DijkstraLevel() {
-  const [selectedPath, setSelectedPath] = useState<string[]>(['START']);
-  const [totalCost, setTotalCost] = useState(0);
+const OPTIMAL_WEIGHT = 13; // AB(1) + BD(2) + BE(3) + EF(3) + CF(4) = 13
+
+export default function MSTLevel() {
+  const [selectedEdges, setSelectedEdges] = useState<number[]>([]);
   const [completed, setCompleted] = useState(false);
-  const [history, setHistory] = useState<HistoryState[]>([{ path: ['START'], cost: 0 }]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Check if all nodes are connected via selected edges
+  const isConnected = (edges: number[]): boolean => {
+    if (edges.length !== NODES.length - 1) return false; // MST needs n-1 edges
+    
+    const adj: Record<string, string[]> = {};
+    NODES.forEach(n => { adj[n.id] = []; });
+    
+    edges.forEach(edgeId => {
+      const edge = EDGES.find(e => e.id === edgeId);
+      if (edge) {
+        adj[edge.from].push(edge.to);
+        adj[edge.to].push(edge.from);
+      }
+    });
+    
+    const visited = new Set<string>();
+    const queue = [NODES[0].id];
+    visited.add(NODES[0].id);
+    
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const neighbor of adj[current]) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push(neighbor);
+        }
+      }
+    }
+    
+    return visited.size === NODES.length;
+  };
+
+  // Calculate total weight of selected edges
+  const getTotalWeight = (): number => {
+    return selectedEdges.reduce((sum, edgeId) => {
+      const edge = EDGES.find(e => e.id === edgeId);
+      return sum + (edge ? edge.weight : 0);
+    }, 0);
+  };
+
+  // Check for cycles
+  const hasCycle = (edges: number[]): boolean => {
+    const adj: Record<string, string[]> = {};
+    NODES.forEach(n => { adj[n.id] = []; });
+    
+    edges.forEach(edgeId => {
+      const edge = EDGES.find(e => e.id === edgeId);
+      if (edge) {
+        adj[edge.from].push(edge.to);
+        adj[edge.to].push(edge.from);
+      }
+    });
+    
+    const visited = new Set<string>();
+    
+    const dfs = (node: string, parent: string | null): boolean => {
+      visited.add(node);
+      for (const neighbor of adj[node]) {
+        if (!visited.has(neighbor)) {
+          if (dfs(neighbor, node)) return true;
+        } else if (neighbor !== parent) {
+          return true; // Found a cycle
+        }
+      }
+      return false;
+    };
+    
+    for (const node of NODES) {
+      if (!visited.has(node.id)) {
+        if (dfs(node.id, null)) return true;
+      }
+    }
+    return false;
+  };
 
   useEffect(() => {
-    if (completed && totalCost === OPTIMAL_COST) {
+    if (isConnected(selectedEdges) && getTotalWeight() === OPTIMAL_WEIGHT) {
+      setCompleted(true);
       try {
         const completedRaw = typeof window !== 'undefined' ? localStorage.getItem('completed_levels') : null;
         const completedLevels: number[] = completedRaw ? JSON.parse(completedRaw) : [];
@@ -62,50 +144,54 @@ export default function DijkstraLevel() {
         }
       } catch (e) {}
     }
-  }, [completed, totalCost]);
+  }, [selectedEdges]);
 
-  const handleNodeClick = (nodeId: string) => {
+  const handleEdgeClick = (edgeId: number) => {
     if (completed) return;
-    if (selectedPath.includes(nodeId)) return;
-
-    const lastNode = selectedPath[selectedPath.length - 1];
-    const edge = EDGES.find((e) => e.from === lastNode && e.to === nodeId);
-
-    if (edge) {
-      const newPath = [...selectedPath, nodeId];
-      const newCost = totalCost + edge.weight;
-      setSelectedPath(newPath);
-      setTotalCost(newCost);
-      setHistory([...history, { path: newPath, cost: newCost }]);
-
-      if (nodeId === 'TARGET') {
-        setCompleted(newCost === OPTIMAL_COST);
+    setErrorMessage(null);
+    
+    if (selectedEdges.includes(edgeId)) {
+      setSelectedEdges(selectedEdges.filter(id => id !== edgeId));
+    } else {
+      const newEdges = [...selectedEdges, edgeId];
+      
+      // Check if adding this edge creates a cycle
+      if (hasCycle(newEdges)) {
+        setErrorMessage('CYCLE DETECTED. Edge rejected.');
+        return;
       }
+      
+      // Check if we're trying to add more than n-1 edges
+      if (newEdges.length > NODES.length - 1) {
+        setErrorMessage('MST requires exactly N-1 edges.');
+        return;
+      }
+      
+      setSelectedEdges(newEdges);
     }
   };
 
-  const handleUndo = () => {
-    if (history.length <= 1) return;
-    const newHistory = history.slice(0, -1);
-    const lastState = newHistory[newHistory.length - 1];
-    setHistory(newHistory);
-    setSelectedPath(lastState.path);
-    setTotalCost(lastState.cost);
-    setCompleted(false);
+  const verify = () => {
+    if (selectedEdges.length !== NODES.length - 1) {
+      setErrorMessage(`MST needs exactly ${NODES.length - 1} edges. You have ${selectedEdges.length}.`);
+      return;
+    }
+    
+    if (!isConnected(selectedEdges)) {
+      setErrorMessage('Graph is not fully connected.');
+      return;
+    }
+    
+    if (getTotalWeight() !== OPTIMAL_WEIGHT) {
+      setErrorMessage(`Total weight ${getTotalWeight()} is not optimal. Find the minimum!`);
+      return;
+    }
   };
 
   const reset = () => {
-    setSelectedPath(['START']);
-    setTotalCost(0);
+    setSelectedEdges([]);
     setCompleted(false);
-    setHistory([{ path: ['START'], cost: 0 }]);
-  };
-
-  const getEdgeHighlighted = (from: string, to: string) => {
-    for (let i = 0; i < selectedPath.length - 1; i++) {
-      if (selectedPath[i] === from && selectedPath[i + 1] === to) return true;
-    }
-    return false;
+    setErrorMessage(null);
   };
 
   return (
@@ -126,38 +212,67 @@ export default function DijkstraLevel() {
         </Link>
         
         <div className="mb-6">
-          <div className="inline-block border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-xs tracking-[0.2em] text-purple-400 mb-2">
-            PROTOCOL v2 // DIJKSTRA_ROUTE
+          <div className="inline-block border border-green-500/30 bg-green-950/20 px-3 py-1 text-xs tracking-[0.2em] text-green-400 mb-2">
+            PROTOCOL v2 // MINIMUM_SPANNING_TREE
           </div>
-          <h1 className="text-3xl font-black text-white mb-2">PATHFINDING OPTIMIZATION</h1>
-          <p className="text-slate-400 text-sm">Calculate optimal infiltration route from START (S) to TARGET (T). Minimize detection cost.</p>
+          <h1 className="text-3xl font-black text-white mb-2">INFRASTRUCTURE BACKBONE</h1>
+          <p className="text-slate-400 text-sm">Connect all nodes with minimum total cable length. No redundant connections.</p>
         </div>
 
         <div className="bg-slate-900/80 backdrop-blur border border-purple-900/50 p-6 mb-4 relative" style={{ height: '400px' }}>
-          <svg className="absolute inset-0 pointer-events-none" width="100%" height="100%">
-            {EDGES.map((edge, i) => {
+          {/* Render edges as clickable */}
+          <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: 'none' }}>
+            {EDGES.map((edge) => {
               const n1 = NODES.find((n) => n.id === edge.from);
               const n2 = NODES.find((n) => n.id === edge.to);
               if (!n1 || !n2) return null;
-              return <GraphEdge key={i} x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} weight={edge.weight} highlighted={getEdgeHighlighted(edge.from, edge.to)} />;
+              
+              const isSelected = selectedEdges.includes(edge.id);
+              const midX = (n1.x + n2.x) / 2;
+              const midY = (n1.y + n2.y) / 2;
+              
+              return (
+                <g key={edge.id} style={{ pointerEvents: 'auto', cursor: 'pointer' }} onClick={() => handleEdgeClick(edge.id)}>
+                  {/* Invisible wider line for easier clicking */}
+                  <line x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} stroke="transparent" strokeWidth="20" />
+                  {/* Visible line */}
+                  <line 
+                    x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y}
+                    stroke={isSelected ? '#a855f7' : '#475569'}
+                    strokeWidth={isSelected ? 3 : 2}
+                    opacity={isSelected ? 1 : 0.6}
+                  />
+                  {/* Weight label */}
+                  <circle cx={midX} cy={midY} r="14" fill={isSelected ? '#7c3aed' : '#1e293b'} stroke={isSelected ? '#a855f7' : '#475569'} strokeWidth="1" />
+                  <text x={midX} y={midY} textAnchor="middle" dy="4" fill={isSelected ? 'white' : '#94a3b8'} fontSize="11" fontFamily="monospace" fontWeight="bold">
+                    {edge.weight}
+                  </text>
+                </g>
+              );
             })}
           </svg>
+          
+          {/* Nodes */}
           {NODES.map((node) => (
-            <GraphNode key={node.id} id={node.id} label={node.label} x={node.x} y={node.y}
-              selected={selectedPath.includes(node.id)} onClick={() => handleNodeClick(node.id)} />
+            <GraphNode key={node.id} id={node.id} label={node.label} x={node.x} y={node.y} selected={false} onClick={() => {}} />
           ))}
         </div>
 
         <div className="mt-4 bg-slate-900/50 border border-purple-900/50 p-4">
-          <div className="font-bold mb-3 text-sm">
+          <div className="font-bold mb-2 text-sm">
             {completed
-              ? <span className="text-purple-400">✓ ALGORITHM OPTIMIZED. OPTIMAL PATH: COST {totalCost}</span>
-              : <span className="text-slate-400">ROUTE: {selectedPath.join(' → ')} | COST: {totalCost}</span>}
+              ? <span className="text-purple-400">✓ ALGORITHM OPTIMIZED. MINIMUM SPANNING TREE FOUND.</span>
+              : errorMessage 
+                ? <span className="text-red-400">⚠ {errorMessage}</span>
+                : <span className="text-slate-400">EDGES SELECTED: {selectedEdges.length} / {NODES.length - 1} | TOTAL WEIGHT: {getTotalWeight()}</span>}
+          </div>
+          <div className="text-xs text-slate-500 mb-3">
+            Click edges to select/deselect. Build a tree connecting all nodes with minimum weight.
           </div>
           <div className="flex gap-3">
-            <button onClick={handleUndo} disabled={history.length <= 1}
-              className="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 text-xs uppercase tracking-wider hover:border-purple-500 hover:text-purple-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-              ↶ UNDO
+            <button onClick={verify} disabled={completed}
+              className="px-4 py-2 bg-purple-900/50 border border-purple-700 text-purple-300 text-xs uppercase tracking-wider hover:bg-purple-700 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+              VERIFY MST
             </button>
             <button onClick={reset}
               className="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 text-xs uppercase tracking-wider hover:border-red-500 hover:text-red-400 transition-all">
@@ -170,10 +285,13 @@ export default function DijkstraLevel() {
       <aside className="relative z-20 w-72 bg-black/80 border-l border-purple-900/50 p-6 backdrop-blur-md">
         <h3 className="text-purple-400 font-bold text-xs uppercase tracking-wider mb-3 border-b border-purple-900/50 pb-2">MISSION PARAMETERS</h3>
         <p className="text-slate-400 text-xs mb-4 leading-relaxed">
-          Navigate through the Guardian defense network. Edge weights represent detection probability. Find the path with minimum total cost.
+          Establish the minimum-cost communication backbone. Connect all Guardian outposts using the least cable.
         </p>
-        <div className="bg-purple-900/20 border border-purple-800/50 p-3 text-xs text-purple-300">
-          <strong>TARGET:</strong> Optimal route costs {OPTIMAL_COST}. Can you find it?
+        <div className="bg-purple-900/20 border border-purple-800/50 p-3 text-xs text-purple-300 mb-4">
+          <strong>OBJECTIVE:</strong> Select exactly {NODES.length - 1} edges that connect all nodes with minimum total weight. No cycles allowed.
+        </div>
+        <div className="bg-green-900/20 border border-green-800/50 p-3 text-xs text-green-300">
+          <strong>HINT:</strong> Kruskal's algorithm - always pick the smallest edge that doesn't create a cycle.
         </div>
       </aside>
     </div>

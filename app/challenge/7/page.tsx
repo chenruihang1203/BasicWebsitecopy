@@ -5,7 +5,6 @@ import Link from 'next/link';
 import GraphNode from '../components/GraphNode';
 import GraphEdge from '../components/GraphEdge';
 
-// Cult Terminal Styles
 const styles = `
   @keyframes tunnel-dive { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 0.5; } 100% { opacity: 0; transform: scale(2); } }
   .scanlines {
@@ -14,100 +13,105 @@ const styles = `
   }
 `;
 
-type BipartiteNode = {
+type GraphNode2 = {
   id: string;
   label: string;
-  set: 'A' | 'B';
   x: number;
   y: number;
 };
 
-const NODES: BipartiteNode[] = [
-  { id: 'A1', label: 'A1', set: 'A', x: 100, y: 100 },
-  { id: 'A2', label: 'A2', set: 'A', x: 100, y: 200 },
-  { id: 'A3', label: 'A3', set: 'A', x: 100, y: 300 },
-  { id: 'B1', label: 'B1', set: 'B', x: 400, y: 100 },
-  { id: 'B2', label: 'B2', set: 'B', x: 400, y: 200 },
-  { id: 'B3', label: 'B3', set: 'B', x: 400, y: 300 },
+type Edge = {
+  from: string;
+  to: string;
+  id: number;
+};
+
+const NODES: GraphNode2[] = [
+  { id: 'A', label: 'A', x: 250, y: 100 },
+  { id: 'B', label: 'B', x: 400, y: 150 },
+  { id: 'C', label: 'C', x: 350, y: 300 },
+  { id: 'D', label: 'D', x: 150, y: 300 },
+  { id: 'E', label: 'E', x: 100, y: 150 },
 ];
 
-const VALID_EDGES = [
-  ['A1', 'B1'],
-  ['A1', 'B2'],
-  ['A2', 'B2'],
-  ['A2', 'B3'],
-  ['A3', 'B1'],
+const EDGES: Edge[] = [
+  { from: 'A', to: 'B', id: 0 },
+  { from: 'A', to: 'D', id: 1 },
+  { from: 'C', to: 'D', id: 2 },
+  { from: 'D', to: 'E', id: 3 },
+  { from: 'E', to: 'A', id: 4 },
+  { from: 'A', to: 'C', id: 5 },
+  { from: 'B', to: 'D', id: 6 },
 ];
 
-export default function BipartiteLevel() {
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [matches, setMatches] = useState<string[][]>([]);
-  const [feedback, setFeedback] = useState('');
-  const [history, setHistory] = useState<string[][][]>([[]]);
+export default function EulerianLevel() {
+  const [currentNode, setCurrentNode] = useState<string>('A');
+  const [path, setPath] = useState<string[]>(['A']);
+  const [usedEdges, setUsedEdges] = useState<number[]>([]);
+  const [completed, setCompleted] = useState(false);
+  const [history, setHistory] = useState<{ path: string[]; usedEdges: number[] }[]>([
+    { path: ['A'], usedEdges: [] },
+  ]);
 
   useEffect(() => {
-    if (matches.length === 3) {
+    if (usedEdges.length === EDGES.length && currentNode === 'A' && path.length > 1) {
+      setCompleted(true);
       try {
         const completedRaw = typeof window !== 'undefined' ? localStorage.getItem('completed_levels') : null;
         const completedLevels: number[] = completedRaw ? JSON.parse(completedRaw) : [];
-        if (!completedLevels.includes(1)) {
-          completedLevels.push(1);
+        if (!completedLevels.includes(4)) {
+          completedLevels.push(4);
           localStorage.setItem('completed_levels', JSON.stringify(completedLevels));
         }
       } catch (e) {}
     }
-  }, [matches]);
+  }, [usedEdges, currentNode, path]);
 
   const handleNodeClick = (nodeId: string) => {
-    if (selectedNodes.includes(nodeId)) {
-      setSelectedNodes(selectedNodes.filter((id) => id !== nodeId));
-    } else {
-      const newSelection = [...selectedNodes, nodeId];
-      setSelectedNodes(newSelection);
+    if (completed) return;
+    if (nodeId === currentNode) return;
 
-      if (newSelection.length === 2) {
-        const edge = newSelection.sort();
-        if (VALID_EDGES.some((e) => JSON.stringify(e.sort()) === JSON.stringify(edge))) {
-          const newMatches = [...matches, edge];
-          setMatches(newMatches);
-          setHistory([...history, newMatches]);
-          setFeedback('✓ NEURAL LINK ESTABLISHED');
-        } else {
-          setFeedback('✗ INVALID CONNECTION. RETRY.');
-        }
-        setTimeout(() => {
-          setSelectedNodes([]);
-          setFeedback('');
-        }, 1000);
-      }
+    const availableEdge = EDGES.find(
+      (e) =>
+        !usedEdges.includes(e.id) &&
+        ((e.from === currentNode && e.to === nodeId) || (e.to === currentNode && e.from === nodeId))
+    );
+
+    if (availableEdge) {
+      const newPath = [...path, nodeId];
+      const newUsedEdges = [...usedEdges, availableEdge.id];
+      setPath(newPath);
+      setUsedEdges(newUsedEdges);
+      setCurrentNode(nodeId);
+      setHistory([...history, { path: newPath, usedEdges: newUsedEdges }]);
     }
   };
 
   const handleUndo = () => {
     if (history.length <= 1) return;
     const newHistory = history.slice(0, -1);
-    const lastMatches = newHistory[newHistory.length - 1];
+    const lastState = newHistory[newHistory.length - 1];
     setHistory(newHistory);
-    setMatches(lastMatches);
-    setFeedback('');
+    setPath(lastState.path);
+    setUsedEdges(lastState.usedEdges);
+    setCurrentNode(lastState.path[lastState.path.length - 1]);
+    setCompleted(false);
   };
 
   const reset = () => {
-    setMatches([]);
-    setSelectedNodes([]);
-    setFeedback('');
-    setHistory([[]]);
+    setCurrentNode('A');
+    setPath(['A']);
+    setUsedEdges([]);
+    setCompleted(false);
+    setHistory([{ path: ['A'], usedEdges: [] }]);
   };
 
-  const isMatched = (nodeId: string) => {
-    return matches.some((m) => m.includes(nodeId));
-  };
+  const isEdgeUsed = (edgeId: number) => usedEdges.includes(edgeId);
 
   return (
     <div className="flex h-screen bg-black text-purple-50 font-mono">
       <style>{styles}</style>
       
-      {/* Background */}
       <div className="absolute inset-0 overflow-hidden bg-black">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="absolute inset-0 border-[50px] border-purple-900/20 opacity-0"
@@ -123,47 +127,34 @@ export default function BipartiteLevel() {
         
         <div className="mb-6">
           <div className="inline-block border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-xs tracking-[0.2em] text-purple-400 mb-2">
-            PROTOCOL v1 // BIPARTITE_MATCH
+            PROTOCOL v4 // EULERIAN_TRACE
           </div>
-          <h1 className="text-3xl font-black text-white mb-2">AGENT ASSIGNMENT OPTIMIZATION</h1>
-          <p className="text-slate-400 text-sm">Match infiltration agents (A) to Guardian sectors (B). Maximize coverage.</p>
+          <h1 className="text-3xl font-black text-white mb-2">NETWORK TOPOLOGY TRACE</h1>
+          <p className="text-slate-400 text-sm">Trace every communication channel exactly once. Map the complete Guardian network.</p>
         </div>
 
         <div className="bg-slate-900/80 backdrop-blur border border-purple-900/50 p-6 mb-4 relative" style={{ height: '400px' }}>
           <svg className="absolute inset-0 pointer-events-none" width="100%" height="100%">
-            {VALID_EDGES.map((edge, i) => {
-              const n1 = NODES.find((n) => n.id === edge[0]);
-              const n2 = NODES.find((n) => n.id === edge[1]);
+            {EDGES.map((edge) => {
+              const n1 = NODES.find((n) => n.id === edge.from);
+              const n2 = NODES.find((n) => n.id === edge.to);
               if (!n1 || !n2) return null;
-              const highlighted = matches.some((m) => JSON.stringify(m.sort()) === JSON.stringify(edge.sort()));
-              return <GraphEdge key={i} x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} highlighted={highlighted} />;
+              return <GraphEdge key={edge.id} x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} highlighted={isEdgeUsed(edge.id)} />;
             })}
           </svg>
           {NODES.map((node) => (
-            <GraphNode
-              key={node.id}
-              id={node.id}
-              label={node.label}
-              x={node.x}
-              y={node.y}
-              selected={selectedNodes.includes(node.id) || isMatched(node.id)}
-              onClick={() => handleNodeClick(node.id)}
-            />
+            <GraphNode key={node.id} id={node.id} label={node.label} x={node.x} y={node.y}
+              selected={node.id === currentNode} onClick={() => handleNodeClick(node.id)} />
           ))}
         </div>
 
-        {feedback && (
-          <div className={`p-4 text-center font-bold uppercase tracking-wider border ${feedback.includes('✓') ? 'border-purple-500 text-purple-400 bg-purple-900/30' : 'border-red-500 text-red-400 bg-red-900/30'}`}>
-            {feedback}
-          </div>
-        )}
-
         <div className="mt-4 bg-slate-900/50 border border-purple-900/50 p-4">
-          <div className="font-bold mb-3 text-sm">
-            {matches.length === 3 
-              ? <span className="text-purple-400">✓ ALGORITHM OPTIMIZED. MAXIMUM MATCHING ACHIEVED.</span>
-              : <span className="text-slate-400">LINKS ESTABLISHED: {matches.length} / 3</span>}
+          <div className="font-bold mb-2 text-sm">
+            {completed
+              ? <span className="text-purple-400">✓ ALGORITHM OPTIMIZED. EULERIAN CIRCUIT COMPLETE.</span>
+              : <span className="text-slate-400">CURRENT NODE: {currentNode} | CHANNELS TRACED: {usedEdges.length} / {EDGES.length}</span>}
           </div>
+          <div className="text-xs text-slate-500 mb-3">TRACE: {path.join(' → ')}</div>
           <div className="flex gap-3">
             <button onClick={handleUndo} disabled={history.length <= 1}
               className="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 text-xs uppercase tracking-wider hover:border-purple-500 hover:text-purple-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
@@ -180,10 +171,10 @@ export default function BipartiteLevel() {
       <aside className="relative z-20 w-72 bg-black/80 border-l border-purple-900/50 p-6 backdrop-blur-md">
         <h3 className="text-purple-400 font-bold text-xs uppercase tracking-wider mb-3 border-b border-purple-900/50 pb-2">MISSION PARAMETERS</h3>
         <p className="text-slate-400 text-xs mb-4 leading-relaxed">
-          Assign each infiltration agent to a compatible Guardian sector. Valid connections are displayed. Each agent can only be assigned once.
+          Traverse every communication link in the Guardian network. Each channel must be traced exactly once before returning to origin.
         </p>
         <div className="bg-purple-900/20 border border-purple-800/50 p-3 text-xs text-purple-300">
-          <strong>OBJECTIVE:</strong> Establish all 3 agent-sector links to complete the assignment matrix.
+          <strong>INTEL:</strong> All nodes have even degree. Eulerian circuit exists.
         </div>
       </aside>
     </div>

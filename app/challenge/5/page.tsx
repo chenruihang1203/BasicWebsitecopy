@@ -5,6 +5,7 @@ import Link from 'next/link';
 import GraphNode from '../components/GraphNode';
 import GraphEdge from '../components/GraphEdge';
 
+// Cult Terminal Styles
 const styles = `
   @keyframes tunnel-dive { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 0.5; } 100% { opacity: 0; transform: scale(2); } }
   .scanlines {
@@ -13,70 +14,71 @@ const styles = `
   }
 `;
 
-type City = {
+type BipartiteNode = {
   id: string;
-  name: string;
+  label: string;
+  set: 'A' | 'B';
   x: number;
   y: number;
 };
 
-const CITIES: City[] = [
-  { id: 'A', name: 'A', x: 250, y: 80 },
-  { id: 'B', name: 'B', x: 450, y: 100 },
-  { id: 'D', name: 'D', x: 400, y: 280 },
-  { id: 'C', name: 'C', x: 150, y: 300 },
+const NODES: BipartiteNode[] = [
+  { id: 'A1', label: 'A1', set: 'A', x: 100, y: 100 },
+  { id: 'A2', label: 'A2', set: 'A', x: 100, y: 200 },
+  { id: 'A3', label: 'A3', set: 'A', x: 100, y: 300 },
+  { id: 'B1', label: 'B1', set: 'B', x: 400, y: 100 },
+  { id: 'B2', label: 'B2', set: 'B', x: 400, y: 200 },
+  { id: 'B3', label: 'B3', set: 'B', x: 400, y: 300 },
 ];
 
-const DISTANCES: Record<string, Record<string, number>> = {
-  A: { B: 8, C: 12, D: 10 },
-  B: { A: 8, C: 6, D: 15 },
-  C: { A: 12, B: 6, D: 9 },
-  D: { A: 10, B: 15, C: 9 },
-};
+const VALID_EDGES = [
+  ['A1', 'B1'],
+  ['A1', 'B2'],
+  ['A2', 'B2'],
+  ['A2', 'B3'],
+  ['A3', 'B1'],
+];
 
-export default function TSPLevel() {
-  const [path, setPath] = useState<string[]>([]);
-  const [totalDistance, setTotalDistance] = useState(0);
-  const [completed, setCompleted] = useState(false);
-  const [history, setHistory] = useState<{ path: string[]; distance: number }[]>([{ path: [], distance: 0 }]);
+export default function BipartiteLevel() {
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  const [matches, setMatches] = useState<string[][]>([]);
+  const [feedback, setFeedback] = useState('');
+  const [history, setHistory] = useState<string[][][]>([[]]);
 
   useEffect(() => {
-    if (completed) {
+    if (matches.length === 3) {
       try {
         const completedRaw = typeof window !== 'undefined' ? localStorage.getItem('completed_levels') : null;
         const completedLevels: number[] = completedRaw ? JSON.parse(completedRaw) : [];
-        if (!completedLevels.includes(5)) {
-          completedLevels.push(5);
+        if (!completedLevels.includes(1)) {
+          completedLevels.push(1);
           localStorage.setItem('completed_levels', JSON.stringify(completedLevels));
         }
       } catch (e) {}
     }
-  }, [completed]);
+  }, [matches]);
 
-  const handleCityClick = (cityId: string) => {
-    if (completed) return;
-
-    if (path.length === 0) {
-      const newPath = [cityId];
-      setPath(newPath);
-      setTotalDistance(0);
-      setHistory([...history, { path: newPath, distance: 0 }]);
-    } else if (path.includes(cityId)) {
-      return;
+  const handleNodeClick = (nodeId: string) => {
+    if (selectedNodes.includes(nodeId)) {
+      setSelectedNodes(selectedNodes.filter((id) => id !== nodeId));
     } else {
-      const lastCity = path[path.length - 1];
-      const distance = DISTANCES[lastCity][cityId];
-      const newPath = [...path, cityId];
-      const newTotal = totalDistance + distance;
-      setPath(newPath);
-      setTotalDistance(newTotal);
-      setHistory([...history, { path: newPath, distance: newTotal }]);
+      const newSelection = [...selectedNodes, nodeId];
+      setSelectedNodes(newSelection);
 
-      if (newPath.length === CITIES.length) {
-        const returnDistance = DISTANCES[cityId][newPath[0]];
-        const finalDistance = newTotal + returnDistance;
-        setTotalDistance(finalDistance);
-        setCompleted(finalDistance === 33);
+      if (newSelection.length === 2) {
+        const edge = newSelection.sort();
+        if (VALID_EDGES.some((e) => JSON.stringify(e.sort()) === JSON.stringify(edge))) {
+          const newMatches = [...matches, edge];
+          setMatches(newMatches);
+          setHistory([...history, newMatches]);
+          setFeedback('✓ NEURAL LINK ESTABLISHED');
+        } else {
+          setFeedback('✗ INVALID CONNECTION. RETRY.');
+        }
+        setTimeout(() => {
+          setSelectedNodes([]);
+          setFeedback('');
+        }, 1000);
       }
     }
   };
@@ -84,24 +86,28 @@ export default function TSPLevel() {
   const handleUndo = () => {
     if (history.length <= 1) return;
     const newHistory = history.slice(0, -1);
-    const lastState = newHistory[newHistory.length - 1];
+    const lastMatches = newHistory[newHistory.length - 1];
     setHistory(newHistory);
-    setPath(lastState.path);
-    setTotalDistance(lastState.distance);
-    setCompleted(false);
+    setMatches(lastMatches);
+    setFeedback('');
   };
 
   const reset = () => {
-    setPath([]);
-    setTotalDistance(0);
-    setCompleted(false);
-    setHistory([{ path: [], distance: 0 }]);
+    setMatches([]);
+    setSelectedNodes([]);
+    setFeedback('');
+    setHistory([[]]);
+  };
+
+  const isMatched = (nodeId: string) => {
+    return matches.some((m) => m.includes(nodeId));
   };
 
   return (
     <div className="flex h-screen bg-black text-purple-50 font-mono">
       <style>{styles}</style>
       
+      {/* Background */}
       <div className="absolute inset-0 overflow-hidden bg-black">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="absolute inset-0 border-[50px] border-purple-900/20 opacity-0"
@@ -117,50 +123,47 @@ export default function TSPLevel() {
         
         <div className="mb-6">
           <div className="inline-block border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-xs tracking-[0.2em] text-purple-400 mb-2">
-            PROTOCOL v5 // TSP_INFILTRATE
+            PROTOCOL v1 // BIPARTITE_MATCH
           </div>
-          <h1 className="text-3xl font-black text-white mb-2">OPTIMAL INFILTRATION ROUTE</h1>
-          <p className="text-slate-400 text-sm">Visit all high-value targets with minimum resource expenditure. Return to origin.</p>
+          <h1 className="text-3xl font-black text-white mb-2">AGENT ASSIGNMENT OPTIMIZATION</h1>
+          <p className="text-slate-400 text-sm">Match infiltration agents (A) to Guardian sectors (B). Maximize coverage.</p>
         </div>
 
         <div className="bg-slate-900/80 backdrop-blur border border-purple-900/50 p-6 mb-4 relative" style={{ height: '400px' }}>
           <svg className="absolute inset-0 pointer-events-none" width="100%" height="100%">
-            {CITIES.map((city, i) =>
-              CITIES.slice(i + 1).map((other, j) => (
-                <GraphEdge key={`${i}-${j}`} x1={city.x} y1={city.y} x2={other.x} y2={other.y} weight={DISTANCES[city.id][other.id]} />
-              ))
-            )}
-            {path.length > 1 &&
-              path.map((cityId, i) => {
-                if (i === 0) return null;
-                const c1 = CITIES.find((c) => c.id === path[i - 1]);
-                const c2 = CITIES.find((c) => c.id === cityId);
-                if (!c1 || !c2) return null;
-                return <GraphEdge key={i} x1={c1.x} y1={c1.y} x2={c2.x} y2={c2.y} highlighted />;
-              })}
-            {completed && path.length > 0 && (
-              <GraphEdge
-                x1={CITIES.find((c) => c.id === path[path.length - 1])!.x}
-                y1={CITIES.find((c) => c.id === path[path.length - 1])!.y}
-                x2={CITIES.find((c) => c.id === path[0])!.x}
-                y2={CITIES.find((c) => c.id === path[0])!.y}
-                highlighted
-              />
-            )}
+            {VALID_EDGES.map((edge, i) => {
+              const n1 = NODES.find((n) => n.id === edge[0]);
+              const n2 = NODES.find((n) => n.id === edge[1]);
+              if (!n1 || !n2) return null;
+              const highlighted = matches.some((m) => JSON.stringify(m.sort()) === JSON.stringify(edge.sort()));
+              return <GraphEdge key={i} x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} highlighted={highlighted} />;
+            })}
           </svg>
-          {CITIES.map((city) => (
-            <GraphNode key={city.id} id={city.id} label={city.name} x={city.x} y={city.y}
-              selected={path.includes(city.id)} onClick={() => handleCityClick(city.id)} />
+          {NODES.map((node) => (
+            <GraphNode
+              key={node.id}
+              id={node.id}
+              label={node.label}
+              x={node.x}
+              y={node.y}
+              selected={selectedNodes.includes(node.id) || isMatched(node.id)}
+              onClick={() => handleNodeClick(node.id)}
+            />
           ))}
         </div>
 
-        <div className="mt-4 bg-slate-900/50 border border-purple-900/50 p-4">
-          <div className="font-bold mb-2 text-sm">
-            {completed 
-              ? <span className="text-purple-400">✓ ALGORITHM OPTIMIZED. OPTIMAL ROUTE: COST {totalDistance}</span>
-              : <span className="text-slate-400">ROUTE: {path.length > 0 ? path.join(' → ') : 'SELECT ORIGIN TARGET'}</span>}
+        {feedback && (
+          <div className={`p-4 text-center font-bold uppercase tracking-wider border ${feedback.includes('✓') ? 'border-purple-500 text-purple-400 bg-purple-900/30' : 'border-red-500 text-red-400 bg-red-900/30'}`}>
+            {feedback}
           </div>
-          {!completed && <div className="text-xs text-slate-500 mb-3">RESOURCE COST: {totalDistance}</div>}
+        )}
+
+        <div className="mt-4 bg-slate-900/50 border border-purple-900/50 p-4">
+          <div className="font-bold mb-3 text-sm">
+            {matches.length === 3 
+              ? <span className="text-purple-400">✓ ALGORITHM OPTIMIZED. MAXIMUM MATCHING ACHIEVED.</span>
+              : <span className="text-slate-400">LINKS ESTABLISHED: {matches.length} / 3</span>}
+          </div>
           <div className="flex gap-3">
             <button onClick={handleUndo} disabled={history.length <= 1}
               className="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 text-xs uppercase tracking-wider hover:border-purple-500 hover:text-purple-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
@@ -177,10 +180,10 @@ export default function TSPLevel() {
       <aside className="relative z-20 w-72 bg-black/80 border-l border-purple-900/50 p-6 backdrop-blur-md">
         <h3 className="text-purple-400 font-bold text-xs uppercase tracking-wider mb-3 border-b border-purple-900/50 pb-2">MISSION PARAMETERS</h3>
         <p className="text-slate-400 text-xs mb-4 leading-relaxed">
-          Calculate the most efficient route to hit all Guardian strongholds. Minimize total resource expenditure while covering every target.
+          Assign each infiltration agent to a compatible Guardian sector. Valid connections are displayed. Each agent can only be assigned once.
         </p>
         <div className="bg-purple-900/20 border border-purple-800/50 p-3 text-xs text-purple-300">
-          <strong>OBJECTIVE:</strong> Find the route with minimum total cost (optimal: 33).
+          <strong>OBJECTIVE:</strong> Establish all 3 agent-sector links to complete the assignment matrix.
         </div>
       </aside>
     </div>
