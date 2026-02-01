@@ -20,13 +20,14 @@ export default function GraphEdge({ x1, y1, x2, y2, weight, highlighted }: Graph
         y1={y1}
         x2={x2}
         y2={y2}
-        className={`transition-all ${highlighted ? 'stroke-blue-600 stroke-[3]' : 'stroke-gray-300 stroke-2'}`}
+        className={`transition-all ${highlighted ? 'stroke-purple-500 stroke-[3]' : 'stroke-slate-700 stroke-2'}`}
+        style={highlighted ? { filter: 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.6))' } : {}}
       />
       {weight !== undefined && (
         <text
           x={midX}
           y={midY}
-          className="fill-gray-600 text-xs font-semibold"
+          className="fill-slate-400 text-xs font-mono font-bold"
           textAnchor="middle"
           dy="-5"
         >

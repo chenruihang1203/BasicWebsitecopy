@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       // Extract userName from custom params (sent from client auth.params)
       const userName = body.get('user_name') as string || 'Anonymous';
       const userId = body.get('user_id') as string || `user_${Date.now()}`;
+      const userFaction = body.get('user_faction') as string || null;
 
       console.log('Presence auth for user:', userName, 'with ID:', userId);
 
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
         user_id: userId,
         user_info: {
           name: userName,
+          faction: userFaction,
         },
       };
 

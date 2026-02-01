@@ -34,6 +34,8 @@ async function dbConnect() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000, // Fail after 5s instead of 30s
+      family: 4, // Force IPv4 to avoid WSL/IPv6 connection issues
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
