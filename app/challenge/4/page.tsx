@@ -56,8 +56,8 @@ export default function DijkstraLevel() {
       try {
         const completedRaw = typeof window !== 'undefined' ? localStorage.getItem('completed_levels') : null;
         const completedLevels: number[] = completedRaw ? JSON.parse(completedRaw) : [];
-        if (!completedLevels.includes(2)) {
-          completedLevels.push(2);
+        if (!completedLevels.includes(4)) {
+          completedLevels.push(4);
           localStorage.setItem('completed_levels', JSON.stringify(completedLevels));
         }
       } catch (e) {}
@@ -127,7 +127,7 @@ export default function DijkstraLevel() {
         
         <div className="mb-6">
           <div className="inline-block border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-xs tracking-[0.2em] text-purple-400 mb-2">
-            PROTOCOL v2 // DIJKSTRA_ROUTE
+            PROTOCOL v4 // DIJKSTRA_ROUTE
           </div>
           <h1 className="text-3xl font-black text-white mb-2">PATHFINDING OPTIMIZATION</h1>
           <p className="text-slate-400 text-sm">Calculate optimal infiltration route from START (S) to TARGET (T). Minimize detection cost.</p>

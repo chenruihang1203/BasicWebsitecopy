@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LEVELS, type LevelData } from './data/levels';
 
@@ -73,12 +74,26 @@ type User = {
 };
 
 export default function ChallengePage() {
+  const router = useRouter();
   const [user, setUser] = useState<User>({ name: 'Cultist', avatar: '👁️', bio: 'AI Trainer' });
   const [completedLevels, setCompletedLevels] = useState<number[]>([]);
 
+  const handleTerminateSession = () => {
+    try {
+      localStorage.removeItem('turing_user');
+      localStorage.removeItem('session_user_name');
+      localStorage.removeItem('completed_levels');
+      sessionStorage.clear();
+    } catch(e) {}
+    router.push('/');
+  };
+
   useEffect(() => {
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('turing_user') : null;
+      const sessionRaw = typeof window !== 'undefined' ? sessionStorage.getItem('turing_user') : null;
+      const localRaw = typeof window !== 'undefined' ? localStorage.getItem('turing_user') : null;
+      const raw = sessionRaw || localRaw;
+
       if (raw) {
         const parsed = JSON.parse(raw);
         setUser({
@@ -262,6 +277,13 @@ export default function ChallengePage() {
               </p>
             </div>
           </div>
+          
+          <button 
+            onClick={handleTerminateSession}
+            className="mt-4 w-full py-3 bg-red-950/30 border border-red-900 text-red-500 hover:bg-red-900 hover:text-white transition-all text-xs font-bold uppercase tracking-widest"
+          >
+            Terminate Session
+          </button>
         </aside>
       </div>
     </div>

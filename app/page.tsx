@@ -111,8 +111,13 @@ export default function Homepage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('turing_user') : null;
+      // Priority: SessionStorage -> LocalStorage to avoid "Zombie Profile"
+      const sessionRaw = sessionStorage.getItem('turing_user');
+      const localRaw = localStorage.getItem('turing_user');
+      const raw = sessionRaw || localRaw;
+
       if (raw) {
         const parsed = JSON.parse(raw);
         setUser({
@@ -121,6 +126,11 @@ export default function Homepage() {
           bio: parsed.bio || 'Turing Test Participant',
         });
         setIsLoggedIn(true);
+        
+        // Sync session storage if missing
+        if (!sessionRaw && localRaw) {
+           sessionStorage.setItem('turing_user', localRaw);
+        }
       }
     } catch (e) {
       // ignore
@@ -135,10 +145,24 @@ export default function Homepage() {
 
   function handleJoin(name: string) {
     if (!name || !name.trim()) return;
+    
+    // Forcefully clear old data to prevent "Zombie Profile"
+    try {
+      localStorage.removeItem('turing_user');
+      sessionStorage.removeItem('turing_user');
+      // Clear other potentially conflicting keys
+      localStorage.removeItem('session_user_name');
+      localStorage.removeItem('completed_levels');
+      sessionStorage.clear();
+    } catch(e) {}
+
     const profile = { name: name.trim(), avatar: getRandomAvatar(), bio: 'Turing Test Participant' };
     try {
+      // Save to both storages
       localStorage.setItem('turing_user', JSON.stringify(profile));
+      sessionStorage.setItem('turing_user', JSON.stringify(profile));
     } catch (e) {}
+    
     setUser(profile);
     setIsLoggedIn(true);
   }
@@ -150,7 +174,14 @@ export default function Homepage() {
   }
 
   function handleLogout() {
-    try { localStorage.removeItem('turing_user'); } catch (e) {}
+    try { 
+      // Complete wipe of user data
+      localStorage.removeItem('turing_user');
+      localStorage.removeItem('session_user_name');
+      localStorage.removeItem('completed_levels');
+      sessionStorage.clear();
+    } catch (e) {}
+    
     setUser({ name: 'Guest', avatar: '👤', bio: 'Turing Test Participant' });
     setIsLoggedIn(false);
   }

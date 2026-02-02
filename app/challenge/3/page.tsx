@@ -50,8 +50,8 @@ export default function BipartiteLevel() {
       try {
         const completedRaw = typeof window !== 'undefined' ? localStorage.getItem('completed_levels') : null;
         const completedLevels: number[] = completedRaw ? JSON.parse(completedRaw) : [];
-        if (!completedLevels.includes(1)) {
-          completedLevels.push(1);
+        if (!completedLevels.includes(3)) {
+          completedLevels.push(3);
           localStorage.setItem('completed_levels', JSON.stringify(completedLevels));
         }
       } catch (e) {}
@@ -59,6 +59,13 @@ export default function BipartiteLevel() {
   }, [matches]);
 
   const handleNodeClick = (nodeId: string) => {
+    // Prevent clicking already matched nodes
+    if (isMatched(nodeId) && !selectedNodes.includes(nodeId)) {
+      setFeedback('⚠ NODE ALREADY CONSECRATED');
+      setTimeout(() => setFeedback(''), 1000);
+      return;
+    }
+
     if (selectedNodes.includes(nodeId)) {
       setSelectedNodes(selectedNodes.filter((id) => id !== nodeId));
     } else {
@@ -66,8 +73,22 @@ export default function BipartiteLevel() {
       setSelectedNodes(newSelection);
 
       if (newSelection.length === 2) {
-        const edge = newSelection.sort();
-        if (VALID_EDGES.some((e) => JSON.stringify(e.sort()) === JSON.stringify(edge))) {
+        const edge = [...newSelection].sort();
+        
+        // Check if both nodes belong to different sets
+        const n1 = NODES.find(n => n.id === newSelection[0]);
+        const n2 = NODES.find(n => n.id === newSelection[1]);
+        
+        if (n1 && n2 && n1.set === n2.set) {
+          setFeedback('✗ CANNOT PAIR WITHIN SAME CLUSTER');
+          setTimeout(() => {
+            setSelectedNodes([]);
+            setFeedback('');
+          }, 1000);
+          return;
+        }
+
+        if (VALID_EDGES.some((e) => JSON.stringify([...e].sort()) === JSON.stringify(edge))) {
           const newMatches = [...matches, edge];
           setMatches(newMatches);
           setHistory([...history, newMatches]);
@@ -123,7 +144,7 @@ export default function BipartiteLevel() {
         
         <div className="mb-6">
           <div className="inline-block border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-xs tracking-[0.2em] text-purple-400 mb-2">
-            PROTOCOL v1 // BIPARTITE_MATCH
+            PROTOCOL v3 // BIPARTITE_MATCH
           </div>
           <h1 className="text-3xl font-black text-white mb-2">AGENT ASSIGNMENT OPTIMIZATION</h1>
           <p className="text-slate-400 text-sm">Match infiltration agents (A) to Guardian sectors (B). Maximize coverage.</p>

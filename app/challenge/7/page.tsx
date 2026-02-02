@@ -59,8 +59,8 @@ export default function EulerianLevel() {
       try {
         const completedRaw = typeof window !== 'undefined' ? localStorage.getItem('completed_levels') : null;
         const completedLevels: number[] = completedRaw ? JSON.parse(completedRaw) : [];
-        if (!completedLevels.includes(4)) {
-          completedLevels.push(4);
+        if (!completedLevels.includes(7)) {
+          completedLevels.push(7);
           localStorage.setItem('completed_levels', JSON.stringify(completedLevels));
         }
       } catch (e) {}
@@ -127,7 +127,7 @@ export default function EulerianLevel() {
         
         <div className="mb-6">
           <div className="inline-block border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-xs tracking-[0.2em] text-purple-400 mb-2">
-            PROTOCOL v4 // EULERIAN_TRACE
+            PROTOCOL v7 // EULERIAN_TRACE
           </div>
           <h1 className="text-3xl font-black text-white mb-2">NETWORK TOPOLOGY TRACE</h1>
           <p className="text-slate-400 text-sm">Trace every communication channel exactly once. Map the complete Guardian network.</p>

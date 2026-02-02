@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Pusher from 'pusher-js';
 
 // ==========================================
@@ -289,6 +290,7 @@ const getRandomTags = (profile: any): string[] => {
 // 4. MAIN COMPONENT
 // ==========================================
 export default function Home() {
+  const router = useRouter();
   // --- Expanded State for Intro Flow ---
   // Added: intro3, faction, scanning to accommodate Source A's flow
   const [appState, setAppState] = useState<'intro1' | 'intro2' | 'intro3' | 'faction' | 'selection' | 'scanning' | 'chat'>('intro1');
@@ -390,25 +392,31 @@ export default function Home() {
   // Initial Load & Auth
   useEffect(() => {
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('turing_user') : null;
+      // FIX: Robust Session Priority Check
+      const sessionRaw = typeof window !== 'undefined' ? sessionStorage.getItem('turing_user') : null;
+      const localRaw = typeof window !== 'undefined' ? localStorage.getItem('turing_user') : null; 
+      const raw = sessionRaw || localRaw;
+      
       if (raw) {
         const p = JSON.parse(raw);
-        const storedName = p.name || '';
-        const sessionName = typeof window !== 'undefined' ? sessionStorage.getItem('session_user_name') : null;
-        if (sessionName) {
-          setUserName(sessionName);
-        } else {
-          const finalName = storedName || `Survivor_${Math.floor(Math.random()*10000)}`;
-          setUserName(finalName);
-          sessionStorage.setItem('session_user_name', finalName);
-          if (!storedName) localStorage.setItem('turing_user', JSON.stringify({ name: finalName }));
-        }
+        // Trust the object from storage primarily
+        const finalName = p.name || `Survivor_${Math.floor(Math.random()*10000)}`;
+        setUserName(finalName);
         setIsLoggedIn(true);
+        
+        // Ensure session tracking matches
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('session_user_name', finalName);
+            // If we only had it in local, sync to session
+            if (!sessionRaw) sessionStorage.setItem('turing_user', raw);
+        }
       } else {
         const inputName = window.prompt('Enter your survivor name:', `Survivor_${Math.floor(Math.random()*10000)}`);
         const guestName = inputName?.trim() || `Survivor_${Math.floor(Math.random()*10000)}`;
         setUserName(guestName);
-        localStorage.setItem('turing_user', JSON.stringify({ name: guestName }));
+        const profile = { name: guestName, avatar: '👤', bio: 'Guest' };
+        localStorage.setItem('turing_user', JSON.stringify(profile));
+        sessionStorage.setItem('turing_user', JSON.stringify(profile));
         sessionStorage.setItem('session_user_name', guestName);
         setIsLoggedIn(true);
       }
@@ -730,6 +738,24 @@ export default function Home() {
     hasSignaledJudgingRef.current = false;
   };
 
+  const handleTerminateSession = () => {
+    // 1. Wipe all storage
+    try {
+      localStorage.removeItem('turing_user');
+      localStorage.removeItem('session_user_name');
+      localStorage.removeItem('completed_levels');
+      sessionStorage.clear();
+    } catch(e) {}
+
+    // 2. Disconnect Pusher
+    if (pusherRef.current) {
+      pusherRef.current.disconnect();
+    }
+
+    // 3. Redirect home
+    router.push('/');
+  };
+
   const currentMessages = selectedUser ? conversations[selectedUser.id] || [] : [];
   const isHumanChat = selectedUser?.isReal === true;
   const lastMessage = currentMessages[currentMessages.length - 1];
@@ -1041,8 +1067,8 @@ export default function Home() {
                     </div>
                   )}
                </div>
-               <button onClick={resetGame} className="text-red-500 border-2 border-red-900 px-8 py-3 hover:bg-red-900/30 font-bold tracking-widest text-lg">
-                 DISCONNECT
+               <button onClick={handleTerminateSession} className="text-red-500 border-2 border-red-900 px-8 py-3 hover:bg-red-900/30 font-bold tracking-widest text-lg">
+                 TERMINATE SESSION
                </button>
             </div>
 
