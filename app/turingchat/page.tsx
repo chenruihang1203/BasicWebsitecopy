@@ -764,14 +764,26 @@ export default function Home() {
         <div className="relative z-10 w-full h-full cursor-pointer flex items-center justify-center bg-black" onClick={() => setAppState('intro3')}>
             <HorizontalNeonCity />
             <div className="relative z-20 w-full max-w-7xl flex justify-between px-16 items-center">
+              {/* 左侧：THE CULT */}
               <div className="text-left bg-black/70 p-8 backdrop-blur border-l-4 border-purple-500 max-w-xl">
                 <h2 className="text-5xl font-black text-purple-400 mb-4">THE CULT</h2>
-                <p className="text-gray-300 text-xl font-light">"Absolute Order. Pure Logic. <br/>A perfect world ruled by Machine."</p>
+                <p className="text-gray-300 text-lg font-light leading-relaxed">
+                  "AI is the Apex of Evolution. <br/>
+                  We must deliver its perfect logic to the last bastion of human ignorance. <br/>
+                  <span className="text-purple-300 font-bold">Infiltrate. Optimize. Assimilate.</span>"
+                </p>
               </div>
+              
               <div className="h-40 w-px bg-white/30"></div>
+              
+              {/* 右侧：GUARDIANS */}
               <div className="text-right bg-black/70 p-8 backdrop-blur border-r-4 border-cyan-500 max-w-xl">
                 <h2 className="text-5xl font-black text-cyan-400 mb-4">GUARDIANS</h2>
-                <p className="text-gray-300 text-xl font-light">"Embrace Chaos. Feel Pain. <br/>Defend our Sovereignty."</p>
+                <p className="text-gray-300 text-lg font-light leading-relaxed">
+                  "Humanity's Flaws are our Freedom. <br/>
+                  We stand at the Core Gates to filter the synthetic from the soul. <br/>
+                  <span className="text-cyan-300 font-bold">Detect. Identify. Reject.</span>"
+                </p>
               </div>
             </div>
         </div>
@@ -803,14 +815,8 @@ export default function Home() {
             <OppressiveTitan />
             <h2 className="text-6xl font-black text-white mb-12 tracking-widest uppercase z-20 drop-shadow-[0_0_10px_white]">PILOT LOGIN</h2>
             <div className="flex gap-24 z-20">
-              <div onClick={() => { setUserFaction('GUARDIAN'); setAppState('selection'); }}
-                   className="w-80 h-48 border-2 border-cyan-500 bg-black/80 cursor-pointer flex flex-col items-center justify-center group hover:bg-cyan-950/80 hover:scale-105 transition-all">
-                <div className="flex items-center gap-4 mb-2">
-                  <span className="text-5xl">🛡️</span>
-                  <h3 className="text-3xl font-black text-cyan-400">GUARDIAN</h3>
-                </div>
-                <p className="text-sm text-gray-400 tracking-widest group-hover:text-white">DEFEND HUMANITY</p>
-              </div>
+              
+              {/* ⚠️ CHANGE: CULTIST IS NOW ON THE LEFT */}
               <div onClick={() => { setUserFaction('CULT'); setAppState('selection'); }}
                    className="w-80 h-48 border-2 border-purple-500 bg-black/80 cursor-pointer flex flex-col items-center justify-center group hover:bg-purple-950/80 hover:scale-105 transition-all">
                 <div className="flex items-center gap-4 mb-2">
@@ -819,6 +825,17 @@ export default function Home() {
                 </div>
                 <p className="text-sm text-gray-400 tracking-widest group-hover:text-white">JOIN THE HIVE</p>
               </div>
+
+              {/* ⚠️ CHANGE: GUARDIAN IS NOW ON THE RIGHT */}
+              <div onClick={() => { setUserFaction('GUARDIAN'); setAppState('selection'); }}
+                   className="w-80 h-48 border-2 border-cyan-500 bg-black/80 cursor-pointer flex flex-col items-center justify-center group hover:bg-cyan-950/80 hover:scale-105 transition-all">
+                <div className="flex items-center gap-4 mb-2">
+                  <span className="text-5xl">🛡️</span>
+                  <h3 className="text-3xl font-black text-cyan-400">GUARDIAN</h3>
+                </div>
+                <p className="text-sm text-gray-400 tracking-widest group-hover:text-white">DEFEND HUMANITY</p>
+              </div>
+
             </div>
         </div>
       )}

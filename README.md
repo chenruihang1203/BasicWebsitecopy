@@ -1,115 +1,172 @@
-**项目概述**
+# HacKawayi — Strategic Turing Test & Challenge 平台
 
-- **项目名**: HacKawayi — 包含两个小游戏（`turingchat`, `challenge`）
-- **描述**: 一个包含两条产品线的实验性 Web 项目：
-  - `turingchat`: 多人/单人 Turing 测试游戏（Pusher presence、AI 对手、MongoDB 会话记录、评分）
-  # HacKawayi — Strategic Turing Test 游戏平台
+一个以“AI渗透与守护者攻防”为世界观的交互式 Web 平台。包含两条产品线：
 
-  此仓库实现一个用于研究“人类是否能分辨 AI 聊天”的交互式平台（MVP）。前端基于 Next.js（app router），后端以 Next.js API Routes 提供服务，使用 Pusher 做实时消息推送，支持多种 AI 模型（通过数据驱动的 ModelProvider 抽象），并可选把对话记录持久化到 MongoDB。
+- TuringChat：匹配不同模型生成的虚拟角色，进行流式对话并做“AI/人类”判断。
+- Challenge：以关卡形式呈现“AI如何计算最优路径、避开守卫并突破高墙”的策略与算法挑战。
 
-  **摘要**
-  - 功能：匹配虚拟角色（由不同模型生成）、与角色聊天（流式生成响应）、提交猜测（AI/真人），记录并评分会话。
-  - 技术栈：`Next.js 14`、`React 18`、`TypeScript`、`Pusher`、`MongoDB`（`mongoose`）、多模型 AI 抽象（ModelScope / OpenAI 兼容）。
+Lore（世界观）：The Cult 相信 AI 带来绝对公平，试图渗透 Guardian 领地。信徒携 AI 以潜伏方式入侵；挑战关卡象征 AI 在检测网与高墙之间计算最优路径，避开发现并突破防线。
 
-  **快速开始**
+## 摘要
 
-  1. 安装依赖：
+- 功能：角色匹配、流式聊天、实时广播、人类判断与评分、会话持久化、算法挑战可视化。
+- 技术栈：Next.js（App Router）、React 18、TypeScript、Pusher、MongoDB（mongoose）、数据驱动模型抽象（ModelScope/OpenAI 兼容）。
 
-  ```bash
-  npm install
-  ```
+## 快速开始
 
-  2. 本地运行：
+1) 安装依赖
 
-  ```bash
-  npm run dev
-  ```
+```bash
+npm install
+```
 
-  3. 重要环境变量（示例）：
-  - `MONGODB_URI`：MongoDB 连接字符串（可选，用于记录会话与评分）。
-  - `MODELSCOPE_API_KEY` / `MODELSCOPE_BASE_URL`：ModelScope 风格的模型服务凭证（用于 `lib/aiProviders.ts`）。
-  - `OPENAI_API_KEY`：可作为 fallback 的 OpenAI Key（部分路由会回退到 OpenAI）。
-  - `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `PUSHER_CLUSTER`：Pusher 实时通信凭证。
+2) 本地运行（开发）
 
-  请参考仓库根目录的 `.env.example` 或在部署平台上设置对应变量。
+```bash
+npm run dev
+```
 
-  **功能概览**
-  - 角色匹配：服务端对 `DEFAULT_MODELS` 中的每个模型生成一个角色（`/api/match`）。
-  - 聊天流：客户端通过 `/api/chat` 发起流式对话（支持 ModelScope provider 或 OpenAI fallback），并在生成完成时将消息写入 MongoDB（如果配置了）。
-  - 实时消息：`/api/talk` 使用 Pusher 广播人类消息（用于真人对话场景）。
-  - 会话生命周期：`/api/session` 用于开始/结束会话；`/api/game/init` 创建会话；`/api/game/submit` 提交玩家猜测并计算分数。
+3) 构建与启动（生产）
 
-  **架构示意图 (Mermaid)**
+```bash
+npm run build
+npm start
+```
 
-  ```mermaid
-  flowchart TD
-    Client["客户端 (Next.js 页面)"] -->|HTTP / API| Match["/api/match"]
-    Client -->|HTTP / Stream| Chat["/api/chat"]
-    Client -->|HTTP| Session["/api/session"]
-    Client -->|HTTP| GameInit["/api/game/init"]
-    Client -->|HTTP| GameSubmit["/api/game/submit"]
-    Client -->|Pusher| PusherAuth["/api/pusher/auth"]
-    Client -->|Pusher| Talk["/api/talk"]
+4) 必需环境变量
 
-    Match -->|调用 provider.generate| AIProviders["(AI Model Providers)"]
-    Chat -->|调用 provider.stream 或 OpenAI| AIProviders
-    AIProviders -->|请求模型| ExternalModels["(ModelScope / OpenAI)"]
+- `MONGODB_URI`：MongoDB 连接字符串（开启会话记录与评分）。
+- `MODELSCOPE_API_KEY`, `MODELSCOPE_BASE_URL`：模型服务凭证（用于数据驱动 Provider）。
+- `OPENAI_API_KEY`：可作为回退 Provider 的密钥（部分路由可回退）。
+- `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `PUSHER_CLUSTER`：Pusher 凭证（实时与授权）。
 
-    Chat -->|onFinish 写入| Mongo["(MongoDB via lib/db & models/GameSession)"]
-    GameInit --> Mongo
-    GameSubmit --> Mongo
-    Talk -->|trigger| PusherService["(Pusher CDN)"]
-    PusherAuth -->|authorize| PusherService
+示例（.env）：
 
-    style Mongo fill:#f9f,stroke:#333,stroke-width:1px
-    style ExternalModels fill:#fee,stroke:#333
-  ```
+```env
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority
+MODELSCOPE_API_KEY=xxxxxxxx
+MODELSCOPE_BASE_URL=https://api.modelscope.cloud/v1
+OPENAI_API_KEY=xxxxxxxx
+PUSHER_APP_ID=xxxxx
+PUSHER_KEY=xxxxx
+PUSHER_SECRET=xxxxx
+PUSHER_CLUSTER=mt1
+```
 
-  **文件/目录结构（主要项）**
+## 平台特性与玩法
 
-  ```
-  ./
-  ├─ app/
-  │  ├─ api/
-  │  │  ├─ chat/route.ts         # 流式聊天接口，路由到 provider 或 OpenAI
-  │  │  ├─ match/route.ts        # 为每个模型生成角色（character matching）
-  │  │  ├─ game/init/route.ts    # 创建会话记录
-  │  │  ├─ game/submit/route.ts  # 提交玩家猜测并计分
-  │  │  ├─ session/route.ts      # 会话开始/结束
-  │  │  ├─ talk/route.ts         # 人类消息通过 Pusher 广播
-  │  │  └─ pusher/auth/route.ts  # Pusher 授权
-  │  ├─ challenge/               # 算法挑战页面（静态/交互页面）
-  │  ├─ turingchat/              # TuringChat 页面
-  │  ├─ page.tsx                 # 首页
-  │  └─ layout.tsx               # 全局布局
-  ├─ lib/
-  │  ├─ db.ts                    # mongoose 连接封装（缓存连接）
-  │  └─ aiProviders.ts           # 数据驱动的模型注册与 Provider 封装
-  ├─ models/
-  │  └─ GameSession.ts           # mongoose schema：会话与消息记录
-  ├─ log/                        # 项目日志与设计文档
-  ├─ Dockerfile
-  ├─ next.config.mjs
-  └─ package.json
-  ```
+### TuringChat（渗透对话）
 
-  **关键文件说明（快速梳理）**
-  - `app/page.tsx`：首页 UI，提供入口（Start TuringChat / Algorithm Challenges）与本地简单用户信息（localStorage）。
-  - `app/layout.tsx`：Next.js app-level 布局与元数据。
-  - `app/api/match/route.ts`：为 `DEFAULT_MODELS` 中的每个模型调用 `createProviderById` 并请求 `UNIFIED_CHARACTER_PROMPT` 生成角色，返回所有角色给客户端（包含 fallback mock）。
-  - `app/api/chat/route.ts`：流式聊天入口，优先调用 `createProviderById` 返回的 provider.stream；若不可用则回退到 `openai`。聊天结束时会把消息写入 `GameSession`（若配置了 MongoDB）。
-  - `app/api/game/init/route.ts`、`/api/game/submit/route.ts`：分别用于初始化会话与提交玩家的猜测与计分逻辑（包含速度与消息数奖励）。
-  - `app/api/talk/route.ts`：将人类消息通过 Pusher 推送到私有频道（`private-session-{sessionId}`），用于实时多人对话。
-  - `app/api/pusher/auth/route.ts`：处理 Pusher 私有/presence 频道授权。
-  - `lib/aiProviders.ts`：系统中 AI 模型的单一配置中心（`DEFAULT_MODELS`），并封装 `AIModelProvider`，提供 `stream` 与 `generate` 两种能力；同时包含 `UNIFIED_CHARACTER_PROMPT` 模板。
-  - `lib/db.ts`：封装 `mongoose.connect` 并在开发期间复用连接以避免连接泄漏。
-  - `models/GameSession.ts`：会话消息 schema，包含 `messages`、`playerGuess`、`actualOpponent`、`score` 等字段。
+- 角色生成与匹配：后端根据 `DEFAULT_MODELS` 为每个模型生成一个独立角色（`/api/match`）。
+- 流式聊天：客户端调用 `/api/chat`，由 Provider `stream` 返回；结束时（`onFinish`）写入 `GameSession`（如配置了 MongoDB）。
+- 实时广播：使用 `/api/talk` 将人类消息推送至 Pusher 频道，用于多人或观察模式。
+- 会话与评分：`/api/session` 管理会话生命周期；`/api/game/init` 创建；`/api/game/submit` 接收玩家“AI/人类”判断，计算分数与正确性。
 
-  **数据流与交互要点**
-  - 客户端调用 `/api/match` 获取候选角色并展示给玩家；玩家选中后发起 `/api/game/init` 创建会话。
-  - 聊天期间，客户端将用户消息发送给 `/api/chat`（流式），服务器调用对应模型 provider 返回流并在结束回调中写入 `GameSession`（如配置了数据库）。
-  - 若为人类对话（或需要广播消息），客户端通过 `/api/talk` 将消息触发到 Pusher 实时频道，其他客户端监听此频道。
-  - 玩家通过 `/api/game/submit` 提交“AI/人类”猜测，后端基于会话信息计算 `score` 并返回结果。
+玩法建议：像守卫巡逻下的秘密对话。你需要在有限轮次内根据对话风格、细节与行为判断对方是否为 AI；更快做出正确判断可获得更高评分。
 
- 
-  ---
+### Challenge（路径与突破）
+
+- 主题：在 Guardians 的检测网络与高墙之间，AI 计算最优路径以避开发现并突破封锁。
+- 内容：`app/challenge` 提供 1–10 个关卡与可视化组件（`components/GraphNode.tsx`, `components/GraphEdge.tsx`），体现图/路径的策略求解与交互反馈。
+- 目标：在每个关卡中完成任务目标（例如到达安全出口、跨越障碍），体现对“最优策略”的理解与实现。
+
+## 架构示意图（Mermaid）
+
+```mermaid
+flowchart TD
+  Client["Next.js 客户端页面"] -->|HTTP / API| Match["/api/match"]
+  Client -->|HTTP / Stream| Chat["/api/chat"]
+  Client -->|HTTP| Session["/api/session"]
+  Client -->|HTTP| GameInit["/api/game/init"]
+  Client -->|HTTP| GameSubmit["/api/game/submit"]
+  Client -->|Pusher| PusherAuth["/api/pusher/auth"]
+  Client -->|Pusher| Talk["/api/talk"]
+
+  Match -->|provider.generate| AIProviders["AI Model Providers"]
+  Chat -->|provider.stream 或 OpenAI| AIProviders
+  AIProviders -->|请求模型| ExternalModels["ModelScope / OpenAI"]
+
+  Chat -->|onFinish 写入| Mongo["MongoDB: lib/db + models/GameSession"]
+  GameInit --> Mongo
+  GameSubmit --> Mongo
+  Talk -->|trigger| PusherService["Pusher CDN"]
+  PusherAuth -->|authorize| PusherService
+
+  style Mongo fill:#f9f,stroke:#333,stroke-width:1px
+  style ExternalModels fill:#fee,stroke:#333
+```
+
+## 目录与关键文件
+
+```
+./
+├─ app/
+│  ├─ api/
+│  │  ├─ chat/route.ts         # 流式聊天接口，路由到 Provider 或回退到 OpenAI
+│  │  ├─ match/route.ts        # 为每个模型生成与返回角色
+│  │  ├─ game/init/route.ts    # 创建会话记录
+│  │  ├─ game/submit/route.ts  # 提交猜测并计分
+│  │  ├─ session/route.ts      # 会话开始/结束
+│  │  ├─ talk/route.ts         # 人类消息通过 Pusher 广播
+│  │  └─ pusher/auth/route.ts  # Pusher 授权
+│  ├─ challenge/               # 算法挑战页面与组件
+│  ├─ turingchat/              # TuringChat 页面
+│  ├─ page.tsx                 # 首页
+│  └─ layout.tsx               # 全局布局
+├─ lib/
+│  ├─ db.ts                    # mongoose 连接封装（缓存连接）
+│  └─ aiProviders.ts           # 数据驱动的模型注册与 Provider 封装
+├─ models/
+│  └─ GameSession.ts           # mongoose schema：会话与消息记录
+├─ log/                        # 项目日志与设计文档
+├─ Dockerfile
+├─ next.config.mjs
+└─ package.json
+```
+
+模型与 Provider：`lib/aiProviders.ts` 通过 `DEFAULT_MODELS` 统一注册模型（例如 `Qwen/Qwen2.5-7B-Instruct`、`deepseek-ai/DeepSeek-R1-0528` 等），提供 `stream` 和 `generate` 两种能力；角色生成使用 `UNIFIED_CHARACTER_PROMPT` 保持一致格式与风格。
+
+数据模型：`models/GameSession.ts` 记录 `messages`、`playerGuess`、`actualOpponent`、`isCorrect`、`score`、`modelId`、`status` 等字段，用于会话管理与评分统计。
+
+## API 速览
+
+- `/api/match`：为各模型生成角色并返回给客户端。
+- `/api/chat`：按所选模型进行流式聊天；结束时写入 `GameSession`。
+- `/api/session`：会话开始/结束（状态变更）。
+- `/api/game/init`：初始化会话（生成 `sessionId` 等）。
+- `/api/game/submit`：提交玩家判断（AI/人类），计算并返回得分。
+- `/api/talk`：人类消息实时广播至 Pusher 频道（`private-session-{id}`）。
+- `/api/pusher/auth`：授权私有/存在（presence）频道。
+
+## 开发与构建
+
+- 脚本（来自 `package.json`）：`dev`, `build`, `start`, `lint`。
+- Tailwind 与 PostCSS 已配置（`tailwind.config.ts`, `postcss.config.js`）。
+- TypeScript 与 ESLint 已启用（`tsconfig.json`, `eslint-config-next`）。
+
+Docker（可选）：
+
+```bash
+# 构建镜像
+docker build -t hackawayi-app .
+# 运行容器（示例）
+docker run -p 3000:3000 --env-file .env hackawayi-app
+```
+
+## 玩法与调试建议
+
+- TuringChat：先调用 `/api/match` 选择角色 → `/api/game/init` 创建会话 → 在 UI 中聊天（路由走 `/api/chat`）→ 提交判断到 `/api/game/submit` 并查看评分。
+- Challenge：从首页进入 `Challenge`，逐关学习 Guardians 检测与高墙突破策略，理解图搜索、权重与路径优化的直观意义。
+- 调试：留意 Pusher 授权与频道命名；MongoDB 连接在开发模式下有缓存复用逻辑，避免连接泄漏。
+
+## 设计意图（风格与世界观）
+
+我们以“渗透”、“隐匿”、“突破”为视觉与交互风格关键词：
+
+- 文案与 UI 强调“守卫/高墙/检测网”。
+- 角色生成遵循统一提示模板，角色具有简洁而鲜明的个性标签。
+- Challenge 以图形节点与连边展示复杂环境下的策略决策，使“AI 计算最优路径”具象化。
+
+---
+
+若你正在扩展模型或关卡：在 `lib/aiProviders.ts` 的 `DEFAULT_MODELS` 中添加新模型即可被系统发现；在 `app/challenge` 中新增关卡目录（`/1`–`/10` 的风格），复用 `GraphNode/GraphEdge` 组件实现新的策略可视化。
