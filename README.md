@@ -67,7 +67,7 @@ PUSHER_CLUSTER=mt1
 
 ### TuringChat（渗透对话）
 
-- 角色生成与匹配：后端根据 `DEFAULT_MODELS` 为每个模型生成一个独立角色（`/api/match`）。
+- 角色生成与匹配：`/api/match`随机生成AI玩家，赋予其名字并和守护者对话
 - 流式聊天：客户端调用 `/api/chat`，由 Provider `stream` 返回；结束时（`onFinish`）写入 `GameSession`（如配置了 MongoDB）。
 - 实时广播：使用 `/api/talk` 将人类消息推送至 Pusher 频道，用于多人或观察模式。
 - 会话与评分：`/api/session` 管理会话生命周期；`/api/game/init` 创建；`/api/game/submit` 接收玩家“AI/人类”判断，计算分数与正确性。
@@ -137,6 +137,8 @@ flowchart TD
 模型与 Provider：`lib/aiProviders.ts` 通过 `DEFAULT_MODELS` 统一注册模型（例如 `Qwen/Qwen2.5-7B-Instruct`、`deepseek-ai/DeepSeek-R1-0528` 等），提供 `stream` 和 `generate` 两种能力；角色生成使用 `UNIFIED_CHARACTER_PROMPT` 保持一致格式与风格。
 
 数据模型：`models/GameSession.ts` 记录 `messages`、`playerGuess`、`actualOpponent`、`isCorrect`、`score`、`modelId`、`status` 等字段，用于会话管理与评分统计。
+
+另外，设计者在MongoDB注册，将聊天数据打包保存在云端
 
 ## API 速览
 
