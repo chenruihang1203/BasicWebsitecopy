@@ -17,7 +17,7 @@ export const LEVELS: LevelData[] = [
     description: 'Assign infiltration agents to vulnerable sectors. One-to-one perfect mapping.',
     loreDescription: 'Match infiltration agents to Guardian sectors. Each agent must be assigned to a compatible target zone.',
     difficulty: 'easy',
-    algorithm: 'bipartite',
+    algorithm: 'knacksack',
     route: '/challenge/1',
   },
   {
